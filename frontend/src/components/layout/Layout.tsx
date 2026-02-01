@@ -27,7 +27,7 @@ export default function Layout() {
               <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">NaijaTrade</span>
+              <span className="text-xl font-bold text-gray-900">NaijaXch</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -166,8 +166,8 @@ export default function Layout() {
       <footer className="bg-white border-t mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-500 text-sm">
-            <p>&copy; 2026 NaijaTrade Tools. All rights reserved.</p>
-            <p className="mt-1">Made with love for Nigerian traders</p>
+            <p>&copy; 2024 NaijaXch. All rights reserved.</p>
+            <p className="mt-1">Built for Nigerian traders 🇳🇬</p>
           </div>
         </div>
       </footer>

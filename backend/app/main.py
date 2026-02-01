@@ -1,10 +1,41 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import asyncio
+import logging
 
 from app.config import settings
 from app.api.v1.router import api_router
-from app.core.database import engine, Base
+from app.core.database import engine, Base, SessionLocal
+from app.services.arbscanner.price_service import PriceService
+
+logger = logging.getLogger(__name__)
+
+# Background task control
+background_tasks = set()
+
+
+async def price_refresh_task():
+    """Background task to refresh prices every minute."""
+    while True:
+        try:
+            db = SessionLocal()
+            price_service = PriceService(db)
+
+            # Fetch prices for all cryptos
+            for crypto in ["USDT", "BTC", "ETH"]:
+                try:
+                    prices = await price_service.fetch_all_prices(crypto)
+                    logger.info(f"Refreshed {crypto} prices from {len(prices)} exchanges")
+                except Exception as e:
+                    logger.error(f"Error fetching {crypto} prices: {e}")
+
+            db.close()
+        except Exception as e:
+            logger.error(f"Price refresh error: {e}")
+
+        # Wait 60 seconds before next refresh
+        await asyncio.sleep(60)
 
 
 @asynccontextmanager
@@ -13,9 +44,19 @@ async def lifespan(app: FastAPI):
     # Startup
     # Create database tables (in production, use Alembic migrations)
     Base.metadata.create_all(bind=engine)
+
+    # Start background price refresh task
+    task = asyncio.create_task(price_refresh_task())
+    background_tasks.add(task)
+    task.add_done_callback(background_tasks.discard)
+    logger.info("Started background price refresh task")
+
     yield
-    # Shutdown
-    pass
+
+    # Shutdown - cancel background tasks
+    for task in background_tasks:
+        task.cancel()
+    logger.info("Stopped background tasks")
 
 
 app = FastAPI(

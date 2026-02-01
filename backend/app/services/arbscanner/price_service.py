@@ -11,6 +11,9 @@ from app.scrapers.crypto.quidax import QuidaxAPI
 from app.scrapers.crypto.luno import LunoAPI
 from app.scrapers.crypto.binance_p2p import BinanceP2PScraper
 from app.scrapers.crypto.bybit_p2p import BybitP2PScraper
+from app.scrapers.crypto.remitano import RemitanoScraper
+from app.scrapers.crypto.patricia import PatriciaScraper
+from app.scrapers.crypto.paxful import PaxfulScraper
 from app.models.arbscanner.price import CryptoPrice
 from app.models.arbscanner.exchange import Exchange
 from app.models.arbscanner.opportunity import ArbitrageOpportunity
@@ -26,6 +29,9 @@ EXCHANGE_SCRAPERS = {
     "luno": LunoAPI,
     "binance_p2p": BinanceP2PScraper,
     "bybit_p2p": BybitP2PScraper,
+    "remitano": RemitanoScraper,
+    "patricia": PatriciaScraper,
+    "paxful": PaxfulScraper,
 }
 
 

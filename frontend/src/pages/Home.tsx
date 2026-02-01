@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { TrendingUp, BarChart3, Bell, Zap, Shield, Users, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react'
+import { TrendingUp, BarChart3, Bell, Zap, Users, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'

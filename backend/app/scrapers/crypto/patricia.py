@@ -1,8 +1,11 @@
 """Patricia exchange scraper."""
 import httpx
+import logging
 from typing import Dict
 
 from app.scrapers.base import BaseExchangeScraper
+
+logger = logging.getLogger(__name__)
 
 
 class PatriciaScraper(BaseExchangeScraper):
@@ -10,14 +13,22 @@ class PatriciaScraper(BaseExchangeScraper):
     Scrape Patricia for crypto prices.
 
     Patricia is a Nigerian cryptocurrency exchange.
+    Note: API may be unreliable after 2023 security incident.
     """
+
+    # Try multiple URL variants — API status uncertain
+    API_URLS = [
+        "https://api.patricia.com.ng/api/v1/rates",
+        "https://app.patricia.com.ng/api/v1/rates",
+        "https://patricia.com.ng/api/v1/rates",
+    ]
 
     def __init__(self):
         super().__init__()
         self.name = "patricia"
         self.display_name = "Patricia"
         self.type = "exchange"
-        self.base_url = "https://api.patricia.com.ng/api/v1"
+        self.base_url = self.API_URLS[0]
 
     async def get_prices(
         self,
@@ -40,20 +51,26 @@ class PatriciaScraper(BaseExchangeScraper):
         )
 
     async def _fetch_rates(self) -> Dict:
-        """Fetch exchange rates from Patricia."""
+        """Fetch exchange rates from Patricia, trying multiple URLs."""
 
-        url = f"{self.base_url}/rates"
+        for url in self.API_URLS:
+            try:
+                client_kwargs = self._get_client_kwargs()
+                async with httpx.AsyncClient(**client_kwargs) as client:
+                    response = await client.get(url)
 
-        try:
-            client_kwargs = self._get_client_kwargs()
-            async with httpx.AsyncClient(**client_kwargs) as client:
-                response = await client.get(url)
-
-                if response.status_code == 200:
-                    data = response.json()
-                    return self._parse_rates(data)
-        except Exception as e:
-            self._log_error("_fetch_rates", e)
+                    if response.status_code == 200:
+                        data = response.json()
+                        rates = self._parse_rates(data)
+                        if rates:
+                            return rates
+                    else:
+                        logger.warning(
+                            f"[Patricia] {url} returned HTTP {response.status_code}: "
+                            f"{response.text[:200]}"
+                        )
+            except Exception as e:
+                self._log_error(f"_fetch_rates({url})", e)
 
         return {}
 

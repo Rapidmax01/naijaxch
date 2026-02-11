@@ -25,8 +25,8 @@ class BybitP2PScraper(BaseExchangeScraper):
         """Get best buy and sell prices from Bybit P2P."""
 
         buy_ads, sell_ads = await asyncio.gather(
-            self._fetch_ads(crypto, fiat, "1"),  # 1 = Buy
-            self._fetch_ads(crypto, fiat, "0"),  # 0 = Sell
+            self._fetch_ads(crypto, fiat, "0"),  # 0 = Buy (merchant sells to user)
+            self._fetch_ads(crypto, fiat, "1"),  # 1 = Sell (merchant buys from user)
             return_exceptions=True
         )
 
@@ -95,7 +95,7 @@ class BybitP2PScraper(BaseExchangeScraper):
                     "max_amount": float(item.get("maxAmount", 0)),
                     "available": float(item.get("quantity", 0)),
                     "merchant": item.get("nickName", "Unknown"),
-                    "trade_type": "BUY" if side == "1" else "SELL"
+                    "trade_type": "BUY" if side == "0" else "SELL"
                 })
             except (ValueError, TypeError):
                 continue

@@ -1,24 +1,32 @@
 """Paxful P2P scraper."""
 import httpx
+import logging
 from typing import Dict, List
 import asyncio
 
 from app.scrapers.base import BaseExchangeScraper
 
+logger = logging.getLogger(__name__)
+
 
 class PaxfulScraper(BaseExchangeScraper):
     """
-    Scrape Paxful P2P for crypto prices.
+    Scrape Paxful / Noones P2P for crypto prices.
 
-    Paxful is a global P2P marketplace.
+    Paxful was acquired by Noones — try both domains.
     """
+
+    API_URLS = [
+        "https://paxful.com/api/offer/list",
+        "https://noones.com/api/offer/list",
+    ]
 
     def __init__(self):
         super().__init__()
         self.name = "paxful"
         self.display_name = "Paxful"
         self.type = "p2p"
-        self.base_url = "https://paxful.com/api/offer/list"
+        self.base_url = self.API_URLS[0]
 
     async def get_prices(
         self,
@@ -54,7 +62,7 @@ class PaxfulScraper(BaseExchangeScraper):
         fiat: str,
         trade_type: str
     ) -> List[Dict]:
-        """Fetch P2P ads from Paxful."""
+        """Fetch P2P ads, trying Paxful then Noones."""
 
         # Map crypto codes
         crypto_map = {
@@ -71,33 +79,69 @@ class PaxfulScraper(BaseExchangeScraper):
             "limit": 10,
         }
 
-        try:
-            client_kwargs = self._get_client_kwargs()
-            async with httpx.AsyncClient(**client_kwargs) as client:
-                response = await client.get(self.base_url, params=params)
+        for base_url in self.API_URLS:
+            try:
+                client_kwargs = self._get_client_kwargs()
+                # Extract origin from URL for headers
+                origin = base_url.rsplit("/api/", 1)[0]
+                client_kwargs["headers"].update({
+                    "Accept": "application/json",
+                    "Origin": origin,
+                    "Referer": f"{origin}/",
+                })
 
-                if response.status_code == 200:
-                    data = response.json()
-                    return self._parse_ads(data, trade_type)
-        except Exception as e:
-            self._log_error(f"_fetch_ads({crypto}, {fiat}, {trade_type})", e)
+                async with httpx.AsyncClient(**client_kwargs) as client:
+                    response = await client.get(base_url, params=params)
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        ads = self._parse_ads(data, trade_type)
+                        if ads:
+                            return ads
+                    else:
+                        logger.warning(
+                            f"[Paxful] {base_url} returned HTTP {response.status_code}: "
+                            f"{response.text[:200]}"
+                        )
+            except Exception as e:
+                self._log_error(f"_fetch_ads({base_url}, {crypto}, {fiat}, {trade_type})", e)
 
         return []
 
-    def _parse_ads(self, data: dict, trade_type: str) -> List[Dict]:
-        """Parse Paxful response."""
+    def _parse_ads(self, data, trade_type: str) -> List[Dict]:
+        """Parse Paxful/Noones response — handles both formats."""
         results = []
 
-        offers = data.get("data", {}).get("offers", []) if isinstance(data, dict) else []
+        offers = []
+        if isinstance(data, dict):
+            # Paxful format: data.data.offers[]
+            inner = data.get("data", data)
+            if isinstance(inner, dict):
+                offers = inner.get("offers", inner.get("ads", []))
+            elif isinstance(inner, list):
+                offers = inner
+        elif isinstance(data, list):
+            offers = data
 
         for offer in offers[:10]:
+            if not isinstance(offer, dict):
+                continue
             try:
+                price = float(
+                    offer.get("fiat_price_per_crypto", 0)
+                    or offer.get("price", 0)
+                    or offer.get("rate", 0)
+                    or 0
+                )
+                if price <= 0:
+                    continue
+
                 results.append({
-                    "price": float(offer.get("fiat_price_per_crypto", 0) or offer.get("price", 0)),
-                    "min_amount": float(offer.get("fiat_min", 0) or 0),
-                    "max_amount": float(offer.get("fiat_max", 0) or 0),
-                    "available": float(offer.get("crypto_amount", 0) or 0),
-                    "merchant": offer.get("username", "Unknown"),
+                    "price": price,
+                    "min_amount": float(offer.get("fiat_min", 0) or offer.get("min_amount", 0) or 0),
+                    "max_amount": float(offer.get("fiat_max", 0) or offer.get("max_amount", 0) or 0),
+                    "available": float(offer.get("crypto_amount", 0) or offer.get("amount", 0) or 0),
+                    "merchant": offer.get("username", offer.get("seller", "Unknown")),
                     "trade_type": trade_type.upper()
                 })
             except (ValueError, TypeError):

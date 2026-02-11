@@ -12,13 +12,13 @@ from typing import Dict, Optional
 # Realistic NGN prices for Nigerian crypto market (approximate mid-market rates)
 FALLBACK_PRICES = {
     "USDT": {
-        "binance_p2p": {"buy_price": 1580.0, "sell_price": 1575.0, "display_name": "Binance P2P", "type": "p2p"},
-        "bybit_p2p": {"buy_price": 1582.0, "sell_price": 1573.0, "display_name": "Bybit P2P", "type": "p2p"},
-        "quidax": {"buy_price": 1585.0, "sell_price": 1570.0, "display_name": "Quidax", "type": "exchange"},
-        "luno": {"buy_price": 1583.0, "sell_price": 1572.0, "display_name": "Luno", "type": "exchange"},
-        "remitano": {"buy_price": 1588.0, "sell_price": 1568.0, "display_name": "Remitano", "type": "p2p"},
-        "patricia": {"buy_price": 1590.0, "sell_price": 1565.0, "display_name": "Patricia", "type": "exchange"},
-        "paxful": {"buy_price": 1592.0, "sell_price": 1563.0, "display_name": "Paxful", "type": "p2p"},
+        "binance_p2p": {"buy_price": 1435.0, "sell_price": 1430.0, "display_name": "Binance P2P", "type": "p2p"},
+        "bybit_p2p": {"buy_price": 1437.0, "sell_price": 1428.0, "display_name": "Bybit P2P", "type": "p2p"},
+        "quidax": {"buy_price": 1440.0, "sell_price": 1425.0, "display_name": "Quidax", "type": "exchange"},
+        "luno": {"buy_price": 1438.0, "sell_price": 1427.0, "display_name": "Luno", "type": "exchange"},
+        "remitano": {"buy_price": 1443.0, "sell_price": 1423.0, "display_name": "Remitano", "type": "p2p"},
+        "patricia": {"buy_price": 1445.0, "sell_price": 1420.0, "display_name": "Patricia", "type": "exchange"},
+        "paxful": {"buy_price": 1448.0, "sell_price": 1418.0, "display_name": "Paxful", "type": "p2p"},
     },
     "BTC": {
         "binance_p2p": {"buy_price": 155_000_000.0, "sell_price": 154_500_000.0, "display_name": "Binance P2P", "type": "p2p"},

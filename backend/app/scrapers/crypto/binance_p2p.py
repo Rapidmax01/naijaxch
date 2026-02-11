@@ -1,8 +1,11 @@
 import httpx
+import logging
 from typing import List, Dict
 import asyncio
 
 from app.scrapers.base import BaseExchangeScraper
+
+logger = logging.getLogger(__name__)
 
 
 class BinanceP2PScraper(BaseExchangeScraper):
@@ -85,7 +88,14 @@ class BinanceP2PScraper(BaseExchangeScraper):
 
         try:
             client_kwargs = self._get_client_kwargs()
-            client_kwargs["headers"]["Content-Type"] = "application/json"
+            client_kwargs["headers"].update({
+                "Content-Type": "application/json",
+                "Origin": "https://p2p.binance.com",
+                "Referer": "https://p2p.binance.com/",
+                "Accept": "*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+            })
 
             async with httpx.AsyncClient(**client_kwargs) as client:
                 response = await client.post(
@@ -96,6 +106,11 @@ class BinanceP2PScraper(BaseExchangeScraper):
                 if response.status_code == 200:
                     data = response.json()
                     return self._parse_ads(data, trade_type)
+                else:
+                    logger.warning(
+                        f"[Binance P2P] _fetch_ads({crypto}, {fiat}, {trade_type}) "
+                        f"returned HTTP {response.status_code}: {response.text[:200]}"
+                    )
         except Exception as e:
             self._log_error(f"_fetch_ads({crypto}, {fiat}, {trade_type})", e)
 

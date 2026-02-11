@@ -126,7 +126,16 @@ class PriceAggregator:
                 redis_client.set_json(exchange_cache_key, result, self.EXCHANGE_CACHE_TTL)
             else:
                 if isinstance(result, Exception):
-                    logger.warning(f"[{name}] Live fetch failed: {result}")
+                    logger.warning(f"[{name}] Live fetch exception: {type(result).__name__}: {result}")
+                elif not isinstance(result, dict):
+                    logger.warning(f"[{name}] Live fetch returned unexpected type: {type(result).__name__}")
+                elif result.get("buy_price", 0) <= 0:
+                    logger.warning(
+                        f"[{name}] Live fetch returned zero/negative prices: "
+                        f"buy={result.get('buy_price')}, sell={result.get('sell_price')}"
+                    )
+                else:
+                    logger.warning(f"[{name}] Live fetch returned invalid price data (failed bounds/spread check)")
 
                 # Tier 2: Try per-exchange cache
                 cached_price = redis_client.get_json(exchange_cache_key)

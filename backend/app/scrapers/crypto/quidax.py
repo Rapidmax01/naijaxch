@@ -1,7 +1,10 @@
 import httpx
+import logging
 from typing import Dict, Optional
 
 from app.scrapers.base import BaseExchangeScraper
+
+logger = logging.getLogger(__name__)
 
 
 class QuidaxAPI(BaseExchangeScraper):
@@ -28,9 +31,28 @@ class QuidaxAPI(BaseExchangeScraper):
     ) -> Dict:
         """Get current prices from Quidax."""
 
-        # Format pair for Quidax (lowercase)
-        pair = f"{crypto.lower()}{fiat.lower()}"
-        ticker = await self.get_ticker(pair)
+        # Try multiple pair formats
+        pair_formats = [
+            f"{crypto.lower()}{fiat.lower()}",
+            f"{crypto.lower()}_{fiat.lower()}",
+        ]
+
+        ticker = None
+        for pair in pair_formats:
+            ticker = await self.get_ticker(pair)
+            if ticker.get("buy_price", 0) > 0 and ticker.get("sell_price", 0) > 0:
+                break
+
+        # Fallback to orderbook if ticker returned zeros
+        if not ticker or (ticker.get("buy_price", 0) == 0 and ticker.get("sell_price", 0) == 0):
+            for pair in pair_formats:
+                ob_prices = await self._prices_from_orderbook(pair)
+                if ob_prices.get("buy_price", 0) > 0:
+                    ticker = ob_prices
+                    break
+
+        if not ticker:
+            ticker = {"buy_price": 0, "sell_price": 0}
 
         return self._format_response(
             buy_price=ticker.get("buy_price", 0),
@@ -59,22 +81,65 @@ class QuidaxAPI(BaseExchangeScraper):
                     data = response.json()
                     ticker = data.get("data", {}).get("ticker", {})
 
+                    # Resilient field parsing: buy/sell OR ask/bid
+                    buy_price = float(
+                        ticker.get("buy", 0) or ticker.get("ask", 0) or 0
+                    )
+                    sell_price = float(
+                        ticker.get("sell", 0) or ticker.get("bid", 0) or 0
+                    )
+
                     return {
                         "exchange": "quidax",
                         "pair": pair,
-                        "buy_price": float(ticker.get("buy", 0)),  # Best ask
-                        "sell_price": float(ticker.get("sell", 0)),  # Best bid
-                        "last_price": float(ticker.get("last", 0)),
-                        "volume_24h": float(ticker.get("vol", 0)),
-                        "high_24h": float(ticker.get("high", 0)),
-                        "low_24h": float(ticker.get("low", 0))
+                        "buy_price": buy_price,
+                        "sell_price": sell_price,
+                        "last_price": float(ticker.get("last", 0) or 0),
+                        "volume_24h": float(ticker.get("vol", 0) or 0),
+                        "high_24h": float(ticker.get("high", 0) or 0),
+                        "low_24h": float(ticker.get("low", 0) or 0)
                     }
+                else:
+                    logger.warning(
+                        f"[Quidax] get_ticker({pair}) returned HTTP {response.status_code}: "
+                        f"{response.text[:200]}"
+                    )
         except Exception as e:
             self._log_error(f"get_ticker({pair})", e)
 
         return {
             "buy_price": 0,
             "sell_price": 0,
+            "volume_24h": 0
+        }
+
+    async def _prices_from_orderbook(self, pair: str) -> Dict:
+        """Extract best bid/ask from orderbook as fallback."""
+        orderbook = await self.get_orderbook(pair)
+
+        buy_price = 0.0
+        sell_price = 0.0
+
+        asks = orderbook.get("asks", [])
+        bids = orderbook.get("bids", [])
+
+        if asks:
+            # Best ask = lowest ask price = what user pays to buy
+            try:
+                buy_price = float(asks[0].get("price", 0) if isinstance(asks[0], dict) else asks[0][0])
+            except (ValueError, TypeError, IndexError):
+                pass
+
+        if bids:
+            # Best bid = highest bid price = what user gets when selling
+            try:
+                sell_price = float(bids[0].get("price", 0) if isinstance(bids[0], dict) else bids[0][0])
+            except (ValueError, TypeError, IndexError):
+                pass
+
+        return {
+            "buy_price": buy_price,
+            "sell_price": sell_price,
             "volume_24h": 0
         }
 
@@ -105,6 +170,10 @@ class QuidaxAPI(BaseExchangeScraper):
 
                 if response.status_code == 200:
                     return response.json().get("data", {})
+                else:
+                    logger.warning(
+                        f"[Quidax] get_orderbook({pair}) returned HTTP {response.status_code}"
+                    )
         except Exception as e:
             self._log_error(f"get_orderbook({pair})", e)
 

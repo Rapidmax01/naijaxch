@@ -1,6 +1,35 @@
-# Deployment Guide for NaijaTrade Tools
+# Deployment Guide for NaijaXch
 
-## Quick Start with Docker
+## Production Setup (Current)
+
+NaijaXch is deployed on a **DigitalOcean Droplet** with automatic deployments via GitHub Actions.
+
+- **Server:** DigitalOcean Droplet (1 GB / 25 GB / LON1 - Ubuntu 24.04)
+- **Domain:** naijaxch.com
+- **Stack:** Docker Compose (backend, frontend, PostgreSQL, Redis, Caddy)
+- **CI/CD:** GitHub Actions (`.github/workflows/deploy.yml`)
+
+### How Deployments Work
+
+1. Push code to `master` branch
+2. GitHub Actions automatically SSHs into the droplet
+3. Pulls latest code and rebuilds the backend container
+4. Zero-downtime for database, Redis, frontend, and Caddy
+
+### Required GitHub Secrets
+
+These are configured in **GitHub repo > Settings > Secrets and variables > Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `DO_HOST` | Droplet IP address |
+| `DO_USERNAME` | SSH user (e.g. `root`) |
+| `DO_SSH_KEY` | Private SSH key for the droplet |
+| `PROJECT_PATH` | Project path on server (e.g. `/root/naijaxch`) |
+
+---
+
+## Local Development
 
 ### Prerequisites
 - Docker and Docker Compose installed
@@ -11,7 +40,7 @@
 ### 1. Clone and Configure
 
 ```bash
-git clone <repo-url>
+git clone git@github.com:Rapidmax01/naijaxch.git
 cd Naijaxch
 
 # Copy and edit environment variables
@@ -39,13 +68,13 @@ TELEGRAM_BOT_TOKEN=xxx:xxx
 
 ```bash
 # Build and start all services
-docker-compose up -d --build
+docker compose up -d --build
 
 # Check logs
-docker-compose logs -f
+docker compose logs -f
 
 # Run database migrations
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 ```
 
 ### 4. Access the App
@@ -56,44 +85,21 @@ docker-compose exec backend alembic upgrade head
 
 ---
 
-## Production Deployment Options
+## Manual Deployment
 
-### Option A: Railway (Recommended for Quick Deploy)
-
-1. Push code to GitHub
-2. Create a new project on [Railway](https://railway.app)
-3. Add PostgreSQL and Redis services
-4. Connect your GitHub repo
-5. Set environment variables
-6. Deploy!
-
-### Option B: DigitalOcean App Platform
-
-1. Create a DigitalOcean account
-2. Create a new App
-3. Connect GitHub repo
-4. Add managed PostgreSQL and Redis
-5. Configure environment variables
-6. Deploy
-
-### Option C: VPS (Ubuntu)
+If you need to deploy manually (e.g. GitHub Actions is down):
 
 ```bash
-# Install Docker
-curl -fsSL https://get.docker.com | sh
+ssh root@178.62.63.169
+cd /root/naijaxch
+git pull origin master
+docker compose -f docker-compose.prod.yml up -d --build backend
+```
 
-# Clone repo and setup
-git clone <repo-url>
-cd Naijaxch
-cp .env.example .env
-nano .env
+To rebuild all services:
 
-# Run with Docker Compose
-docker-compose up -d
-
-# Setup SSL with Certbot (if using custom domain)
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ---
@@ -102,13 +108,13 @@ sudo certbot --nginx -d yourdomain.com
 
 ```bash
 # Generate a new migration
-docker-compose exec backend alembic revision --autogenerate -m "description"
+docker compose exec backend alembic revision --autogenerate -m "description"
 
 # Apply migrations
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # Rollback one migration
-docker-compose exec backend alembic downgrade -1
+docker compose exec backend alembic downgrade -1
 ```
 
 ---
@@ -122,54 +128,45 @@ docker-compose exec backend alembic downgrade -1
 ### Logs
 ```bash
 # All logs
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f backend
+docker compose logs -f backend
 ```
 
 ---
 
-## SSL/HTTPS Setup
+## SSL/HTTPS
 
-For production, use a reverse proxy like:
-
-1. **Cloudflare** (easiest) - Free SSL, just point DNS
-2. **Nginx + Certbot** - Self-managed SSL
-3. **Traefik** - Automatic SSL with Let's Encrypt
-
-Example Nginx config for production:
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-
-    location / {
-        proxy_pass http://localhost:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
+Production uses **Caddy** for automatic HTTPS (configured in `Caddyfile`). Caddy handles Let's Encrypt certificate provisioning and renewal automatically.
 
 ---
 
-## Scaling
+## Architecture
 
-For high traffic:
-
-1. Use Redis for session storage
-2. Run multiple backend instances
-3. Use a load balancer (nginx, HAProxy)
-4. Consider managed PostgreSQL (Supabase, Neon)
+```
+                    ┌──────────┐
+                    │  Caddy   │ :80/:443
+                    └────┬─────┘
+                    ┌────┴─────┐
+              ┌─────┤          ├─────┐
+              │     └──────────┘     │
+        ┌─────▼────┐          ┌──────▼───┐
+        │ Frontend │          │ Backend  │ :8000
+        │  (Nginx) │          │ (FastAPI)│
+        └──────────┘          └────┬─────┘
+                              ┌────┴─────┐
+                        ┌─────┤          ├─────┐
+                        │     └──────────┘     │
+                  ┌─────▼────┐          ┌──────▼───┐
+                  │ Postgres │          │  Redis   │
+                  │   :5432  │          │  :6379   │
+                  └──────────┘          └──────────┘
+```
 
 ---
 
 ## Support
 
-- Issues: https://github.com/your-repo/issues
-- Email: support@naijatradetools.com
+- Issues: https://github.com/Rapidmax01/naijaxch/issues
+- Email: support@naijaxch.com

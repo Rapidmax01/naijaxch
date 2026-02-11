@@ -1,5 +1,8 @@
+import logging
 from typing import Dict
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 
 class FeeCalculator:
@@ -33,12 +36,45 @@ class FeeCalculator:
         },
         "luno": {
             "trading_fee_percent": Decimal("0.001"),  # 0.1%
-            "withdrawal_usdt": Decimal("0"),
-            "withdrawal_btc": Decimal("0"),
-            "withdrawal_eth": Decimal("0"),
+            "withdrawal_usdt": Decimal("1"),
+            "withdrawal_btc": Decimal("0.0001"),
+            "withdrawal_eth": Decimal("0.005"),
             "ngn_deposit_fee": Decimal("0"),
             "ngn_withdrawal_fee": Decimal("0"),
-        }
+        },
+        "bybit_p2p": {
+            "trading_fee_percent": Decimal("0"),  # No trading fee on P2P
+            "withdrawal_usdt_trc20": Decimal("1"),
+            "withdrawal_usdt_bep20": Decimal("0.3"),
+            "withdrawal_btc": Decimal("0.0002"),
+            "withdrawal_eth": Decimal("0.0015"),
+            "ngn_deposit_fee": Decimal("0"),
+            "ngn_withdrawal_fee": Decimal("0"),
+        },
+        "remitano": {
+            "trading_fee_percent": Decimal("0.01"),  # 1%
+            "withdrawal_usdt": Decimal("2"),
+            "withdrawal_btc": Decimal("0.0005"),
+            "withdrawal_eth": Decimal("0.005"),
+            "ngn_deposit_fee": Decimal("0"),
+            "ngn_withdrawal_fee_percent": Decimal("0.005"),  # 0.5%
+        },
+        "patricia": {
+            "trading_fee_percent": Decimal("0.005"),  # 0.5%
+            "withdrawal_usdt": Decimal("2"),
+            "withdrawal_btc": Decimal("0.0003"),
+            "withdrawal_eth": Decimal("0.005"),
+            "ngn_deposit_fee": Decimal("0"),
+            "ngn_withdrawal_fee_percent": Decimal("0.01"),  # 1%
+        },
+        "paxful": {
+            "trading_fee_percent": Decimal("0.01"),  # 1% (seller pays)
+            "withdrawal_usdt": Decimal("2"),
+            "withdrawal_btc": Decimal("0.0005"),
+            "withdrawal_eth": Decimal("0.005"),
+            "ngn_deposit_fee": Decimal("0"),
+            "ngn_withdrawal_fee": Decimal("0"),
+        },
     }
 
     def get_trading_fee(
@@ -56,10 +92,12 @@ class FeeCalculator:
         Returns:
             Trading fee in NGN
         """
-        fee_percent = self.FEES.get(exchange, {}).get(
-            "trading_fee_percent",
-            Decimal("0")
-        )
+        exchange_fees = self.FEES.get(exchange)
+        if exchange_fees is None:
+            logger.warning(f"Unknown exchange '{exchange}', using conservative 0.5% default fee")
+            fee_percent = Decimal("0.005")
+        else:
+            fee_percent = exchange_fees.get("trading_fee_percent", Decimal("0"))
         return float(Decimal(str(trade_amount_ngn)) * fee_percent)
 
     def get_withdrawal_fee(
@@ -83,7 +121,16 @@ class FeeCalculator:
         Returns:
             Withdrawal fee in NGN equivalent
         """
-        fees = self.FEES.get(exchange, {})
+        exchange_fees = self.FEES.get(exchange)
+        if exchange_fees is None:
+            logger.warning(f"Unknown exchange '{exchange}' for withdrawal fee, using conservative estimate")
+            # Conservative default withdrawal fees in crypto units
+            defaults = {"usdt": Decimal("2"), "btc": Decimal("0.0005"), "eth": Decimal("0.005")}
+            crypto_fee = defaults.get(crypto.lower(), Decimal("2"))
+            fee_ngn = float(crypto_fee) * crypto_price_ngn
+            return fee_ngn
+
+        fees = exchange_fees
 
         # Try network-specific fee first
         fee_key = f"withdrawal_{crypto.lower()}_{network.lower()}"

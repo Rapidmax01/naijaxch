@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Calculator as CalcIcon, ArrowRight, Loader2 } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { calculateArbitrage, fetchExchanges } from '../../services/arbscanner'
 import { formatNaira, formatPercent } from '../../utils/formatters'
+import { getExchangeDisplayName } from '../../utils/exchanges'
 import type { CalculateResponse } from '../../types'
 
 export default function Calculator() {
@@ -17,6 +18,7 @@ export default function Calculator() {
   })
 
   const [result, setResult] = useState<CalculateResponse | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
   const { data: exchangesData } = useQuery({
     queryKey: ['exchanges'],
@@ -27,6 +29,17 @@ export default function Calculator() {
     mutationFn: calculateArbitrage,
     onSuccess: (data) => setResult(data),
   })
+
+  // Auto-calculate with debounce when form changes
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (formData.buy_exchange && formData.sell_exchange && formData.trade_amount_ngn >= 1000) {
+        calculateMutation.mutate(formData)
+      }
+    }, 500)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [formData.buy_exchange, formData.sell_exchange, formData.crypto, formData.trade_amount_ngn])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -160,14 +173,14 @@ export default function Calculator() {
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="text-center">
                   <p className="text-xs text-gray-500 uppercase">Buy on</p>
-                  <p className="font-semibold capitalize">{result.buy_exchange.replace('_', ' ')}</p>
+                  <p className="font-semibold">{getExchangeDisplayName(result.buy_exchange)}</p>
                   <p className="text-green-600 font-bold">{formatNaira(result.buy_price)}</p>
                 </div>
                 <ArrowRight className="w-6 h-6 text-gray-400" />
                 <div className="text-center">
                   <p className="text-xs text-gray-500 uppercase">Sell on</p>
-                  <p className="font-semibold capitalize">{result.sell_exchange.replace('_', ' ')}</p>
-                  <p className="text-red-600 font-bold">{formatNaira(result.sell_price)}</p>
+                  <p className="font-semibold">{getExchangeDisplayName(result.sell_exchange)}</p>
+                  <p className="text-blue-600 font-bold">{formatNaira(result.sell_price)}</p>
                 </div>
               </div>
 

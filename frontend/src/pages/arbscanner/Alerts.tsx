@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Plus, Trash2, Loader2 } from 'lucide-react'
-import { fetchAlerts, createAlert, deleteAlert } from '../../services/arbscanner'
+import { Bell, Plus, Trash2, Loader2, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
+import { fetchAlerts, createAlert, deleteAlert, updateAlert } from '../../services/arbscanner'
 import { useAuthStore } from '../../store/authStore'
 import { Link } from 'react-router-dom'
+import type { Alert } from '../../types'
 
 export default function Alerts() {
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
 
   const [showCreate, setShowCreate] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [newAlert, setNewAlert] = useState({
     crypto: '',
     min_spread_percent: 1.0,
@@ -27,13 +29,15 @@ export default function Alerts() {
     mutationFn: createAlert,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alerts'] })
-      setShowCreate(false)
-      setNewAlert({
-        crypto: '',
-        min_spread_percent: 1.0,
-        notify_telegram: true,
-        notify_email: false,
-      })
+      resetForm()
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Alert> }) => updateAlert(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] })
+      resetForm()
     },
   })
 
@@ -43,6 +47,41 @@ export default function Alerts() {
       queryClient.invalidateQueries({ queryKey: ['alerts'] })
     },
   })
+
+  const resetForm = () => {
+    setShowCreate(false)
+    setEditingId(null)
+    setNewAlert({
+      crypto: '',
+      min_spread_percent: 1.0,
+      notify_telegram: true,
+      notify_email: false,
+    })
+  }
+
+  const handleEdit = (alert: Alert) => {
+    setEditingId(alert.id)
+    setNewAlert({
+      crypto: alert.crypto || '',
+      min_spread_percent: alert.min_spread_percent,
+      notify_telegram: alert.notify_telegram,
+      notify_email: alert.notify_email,
+    })
+    setShowCreate(true)
+  }
+
+  const handleToggle = (alert: Alert) => {
+    updateMutation.mutate({ id: alert.id, data: { is_active: !alert.is_active } })
+  }
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: newAlert })
+    } else {
+      createMutation.mutate(newAlert)
+    }
+  }
 
   if (!isAuthenticated) {
     return (
@@ -72,7 +111,7 @@ export default function Alerts() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreate(true)}
+          onClick={() => { resetForm(); setShowCreate(true) }}
           className="btn btn-primary flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -80,17 +119,13 @@ export default function Alerts() {
         </button>
       </div>
 
-      {/* Create Alert Form */}
+      {/* Create/Edit Alert Form */}
       {showCreate && (
         <div className="card border-2 border-primary-200">
-          <h3 className="font-semibold mb-4">Create New Alert</h3>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              createMutation.mutate(newAlert)
-            }}
-            className="space-y-4"
-          >
+          <h3 className="font-semibold mb-4">
+            {editingId ? 'Edit Alert' : 'Create New Alert'}
+          </h3>
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -146,15 +181,17 @@ export default function Alerts() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
                 className="btn btn-primary flex items-center gap-2"
               >
-                {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                Create Alert
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                {editingId ? 'Save Changes' : 'Create Alert'}
               </button>
               <button
                 type="button"
-                onClick={() => setShowCreate(false)}
+                onClick={resetForm}
                 className="btn btn-secondary"
               >
                 Cancel
@@ -189,12 +226,34 @@ export default function Alerts() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => deleteMutation.mutate(alert.id)}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleToggle(alert)}
+                  disabled={updateMutation.isPending}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  title={alert.is_active ? 'Pause alert' : 'Activate alert'}
+                >
+                  {alert.is_active ? (
+                    <ToggleRight className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <ToggleLeft className="w-6 h-6 text-gray-400" />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleEdit(alert)}
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
+                  title="Edit alert"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate(alert.id)}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                  title="Delete alert"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

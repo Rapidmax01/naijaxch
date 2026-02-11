@@ -26,6 +26,7 @@ class ExchangePriceResponse(BaseModel):
     spread: float
     spread_percent: float
     volume_24h: Optional[float] = None
+    data_source: str = "live"
     updated_at: datetime
 
 
@@ -36,6 +37,7 @@ class AllPricesResponse(BaseModel):
     exchanges: List[ExchangePriceResponse]
     best_buy: Optional[ExchangePriceResponse] = None
     best_sell: Optional[ExchangePriceResponse] = None
+    exchange_statuses: Optional[Dict[str, str]] = None
     updated_at: datetime
 
 

@@ -82,8 +82,8 @@ class RemitanoScraper(BaseExchangeScraper):
                 if response.status_code == 200:
                     data = response.json()
                     return self._parse_ads(data, trade_type)
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"_fetch_ads({crypto}, {fiat}, {trade_type})", e)
 
         return []
 

@@ -1,53 +1,26 @@
 import asyncio
 from celery import shared_task
-from app.scrapers.crypto import BinanceP2PScraper, QuidaxAPI, LunoAPI
 from app.services.arbscanner import PriceAggregator, ArbitrageCalculator
 from app.core.redis import redis_client
-import json
 
 
 @shared_task
 def fetch_all_prices():
     """
-    Fetch prices from all exchanges.
+    Fetch prices from all 7 exchanges via PriceAggregator.
     Runs every 60 seconds via Celery Beat.
     """
 
     async def _fetch():
-        binance = BinanceP2PScraper()
-        quidax = QuidaxAPI()
-        luno = LunoAPI()
-
+        aggregator = PriceAggregator()
         cryptos = ["USDT", "BTC", "ETH"]
         all_prices = {}
 
         for crypto in cryptos:
-            results = await asyncio.gather(
-                binance.get_prices(crypto, "NGN"),
-                quidax.get_prices(crypto, "NGN"),
-                luno.get_prices(crypto, "NGN"),
-                return_exceptions=True
+            prices_data = await aggregator.get_all_prices(
+                crypto=crypto, fiat="NGN", use_cache=False
             )
-
-            prices = {}
-            for result in results:
-                if isinstance(result, dict):
-                    exchange = result.get("exchange")
-                    prices[exchange] = {
-                        "buy_price": result.get("buy_price"),
-                        "sell_price": result.get("sell_price"),
-                        "display_name": result.get("display_name"),
-                        "updated_at": result.get("updated_at")
-                    }
-
-            all_prices[crypto] = prices
-
-            # Cache each crypto's prices
-            redis_client.set_json(
-                f"prices:{crypto}:NGN",
-                {"exchanges": list(prices.values())},
-                expire_seconds=120
-            )
+            all_prices[crypto] = prices_data
 
         return all_prices
 

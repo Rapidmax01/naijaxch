@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Calculator, Bell, Settings } from 'lucide-react'
 import { PriceGrid } from '../../components/arbscanner/PriceGrid'
 import { OpportunityList } from '../../components/arbscanner/OpportunityList'
@@ -8,13 +8,13 @@ import type { ArbitrageOpportunity } from '../../types'
 const CRYPTOS = ['USDT', 'BTC', 'ETH']
 
 export default function ArbDashboard() {
+  const navigate = useNavigate()
   const [selectedCrypto, setSelectedCrypto] = useState('USDT')
   const [minSpread, setMinSpread] = useState(0.5)
   const [tradeAmount, setTradeAmount] = useState(100000)
 
   const handleCalculate = (opp: ArbitrageOpportunity) => {
-    // Navigate to calculator with pre-filled values
-    window.location.href = `/arb/calculator?buy=${opp.buy_exchange}&sell=${opp.sell_exchange}&crypto=${opp.crypto}&amount=${tradeAmount}`
+    navigate(`/arb/calculator?buy=${opp.buy_exchange}&sell=${opp.sell_exchange}&crypto=${opp.crypto}&amount=${tradeAmount}`)
   }
 
   return (

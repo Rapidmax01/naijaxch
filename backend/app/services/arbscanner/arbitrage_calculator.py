@@ -39,6 +39,24 @@ class ArbitrageCalculator:
             Dict with profit calculations
         """
 
+        if buy_price <= 0 or sell_price <= 0:
+            return {
+                "buy_exchange": buy_exchange,
+                "sell_exchange": sell_exchange,
+                "crypto": crypto,
+                "buy_price": float(buy_price),
+                "sell_price": float(sell_price),
+                "trade_amount_ngn": float(trade_amount_ngn),
+                "crypto_amount": 0,
+                "gross_spread": 0,
+                "gross_spread_percent": 0,
+                "fees": {"buy_fee": 0, "sell_fee": 0, "withdrawal_fee": 0, "total": 0},
+                "net_profit": 0,
+                "net_profit_percent": 0,
+                "is_profitable": False,
+                "roi": 0,
+            }
+
         buy_price = Decimal(str(buy_price))
         sell_price = Decimal(str(sell_price))
         trade_amount = Decimal(str(trade_amount_ngn))

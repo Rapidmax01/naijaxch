@@ -1,5 +1,6 @@
 import { ArrowRight, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react'
 import { formatNaira, formatPercent } from '../../utils/formatters'
+import { getExchangeDisplayName } from '../../utils/exchanges'
 import type { ArbitrageOpportunity } from '../../types'
 
 interface Props {
@@ -35,7 +36,7 @@ export function OpportunityCard({ opportunity, highlight, onCalculate }: Props) 
             Buy on
           </p>
           <p className="font-bold text-lg capitalize">
-            {opportunity.buy_exchange.replace('_', ' ')}
+            {getExchangeDisplayName(opportunity.buy_exchange)}
           </p>
           <p className={`text-xl font-bold ${highlight ? '' : 'text-green-600'}`}>
             {formatNaira(opportunity.buy_price)}
@@ -56,7 +57,7 @@ export function OpportunityCard({ opportunity, highlight, onCalculate }: Props) 
             Sell on
           </p>
           <p className="font-bold text-lg capitalize">
-            {opportunity.sell_exchange.replace('_', ' ')}
+            {getExchangeDisplayName(opportunity.sell_exchange)}
           </p>
           <p className={`text-xl font-bold ${highlight ? '' : 'text-red-600'}`}>
             {formatNaira(opportunity.sell_price)}

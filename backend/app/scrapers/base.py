@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 import httpx
+import logging
 from datetime import datetime
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class BaseExchangeScraper(ABC):
@@ -61,6 +64,12 @@ class BaseExchangeScraper(ABC):
             )
             response.raise_for_status()
             return response
+
+    def _log_error(self, method: str, error: Exception) -> None:
+        """Log scraper errors with context."""
+        logger.error(
+            f"[{self.display_name}] {method} failed: {type(error).__name__}: {error}"
+        )
 
     def _format_response(
         self,

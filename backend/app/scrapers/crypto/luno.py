@@ -68,8 +68,8 @@ class LunoAPI(BaseExchangeScraper):
                         "last_price": float(data.get("last_trade", 0)),
                         "volume_24h": float(data.get("rolling_24_hour_volume", 0))
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"get_ticker({pair})", e)
 
         return {
             "buy_price": 0,
@@ -88,8 +88,8 @@ class LunoAPI(BaseExchangeScraper):
 
                 if response.status_code == 200:
                     return response.json().get("tickers", [])
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error("get_all_tickers", e)
 
         return []
 
@@ -105,7 +105,7 @@ class LunoAPI(BaseExchangeScraper):
 
                 if response.status_code == 200:
                     return response.json()
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"get_orderbook({pair})", e)
 
         return {}

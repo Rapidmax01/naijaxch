@@ -52,8 +52,8 @@ class PatriciaScraper(BaseExchangeScraper):
                 if response.status_code == 200:
                     data = response.json()
                     return self._parse_rates(data)
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error("_fetch_rates", e)
 
         return {}
 

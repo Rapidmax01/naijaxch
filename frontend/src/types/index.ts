@@ -27,6 +27,7 @@ export interface ExchangePrice {
   spread: number
   spread_percent: number
   volume_24h?: number
+  data_source?: 'live' | 'cached' | 'sample'
   updated_at: string
 }
 
@@ -36,6 +37,7 @@ export interface AllPricesResponse {
   exchanges: ExchangePrice[]
   best_buy?: ExchangePrice
   best_sell?: ExchangePrice
+  exchange_statuses?: Record<string, string>
   updated_at: string
 }
 

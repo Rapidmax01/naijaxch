@@ -77,8 +77,8 @@ class BybitP2PScraper(BaseExchangeScraper):
                 if response.status_code == 200:
                     data = response.json()
                     return self._parse_ads(data, side)
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"_fetch_ads({crypto}, {fiat}, {side})", e)
 
         return []
 

@@ -9,6 +9,27 @@ router = APIRouter()
 price_aggregator = PriceAggregator()
 
 
+def _to_exchange_price_response(
+    ex: dict, crypto: str, fiat: str
+) -> ExchangePriceResponse:
+    """Convert a raw exchange price dict to an ExchangePriceResponse."""
+    return ExchangePriceResponse(
+        exchange=ex.get("exchange", ""),
+        display_name=ex.get("display_name", ""),
+        crypto=ex.get("crypto", crypto),
+        fiat=ex.get("fiat", fiat),
+        buy_price=ex.get("buy_price", 0),
+        sell_price=ex.get("sell_price", 0),
+        spread=ex.get("spread", 0),
+        spread_percent=ex.get("spread_percent", 0),
+        volume_24h=ex.get("volume_24h"),
+        data_source=ex.get("data_source", "live"),
+        updated_at=datetime.fromisoformat(
+            ex.get("updated_at", datetime.utcnow().isoformat())
+        ),
+    )
+
+
 @router.get("/prices", response_model=AllPricesResponse)
 async def get_all_prices(
     crypto: str = Query(default="USDT", description="Cryptocurrency (USDT, BTC, ETH)"),
@@ -27,52 +48,21 @@ async def get_all_prices(
         use_cache=not refresh
     )
 
-    # Transform to response model
-    exchanges = []
-    for ex in prices.get("exchanges", []):
-        exchanges.append(ExchangePriceResponse(
-            exchange=ex.get("exchange", ""),
-            display_name=ex.get("display_name", ""),
-            crypto=ex.get("crypto", crypto),
-            fiat=ex.get("fiat", fiat),
-            buy_price=ex.get("buy_price", 0),
-            sell_price=ex.get("sell_price", 0),
-            spread=ex.get("spread", 0),
-            spread_percent=ex.get("spread_percent", 0),
-            volume_24h=ex.get("volume_24h"),
-            updated_at=datetime.fromisoformat(ex.get("updated_at", datetime.utcnow().isoformat()))
-        ))
+    exchanges = [
+        _to_exchange_price_response(ex, crypto, fiat)
+        for ex in prices.get("exchanges", [])
+    ]
 
-    best_buy = None
-    best_sell = None
-
-    if prices.get("best_buy"):
-        bb = prices["best_buy"]
-        best_buy = ExchangePriceResponse(
-            exchange=bb.get("exchange", ""),
-            display_name=bb.get("display_name", ""),
-            crypto=bb.get("crypto", crypto),
-            fiat=bb.get("fiat", fiat),
-            buy_price=bb.get("buy_price", 0),
-            sell_price=bb.get("sell_price", 0),
-            spread=bb.get("spread", 0),
-            spread_percent=bb.get("spread_percent", 0),
-            updated_at=datetime.fromisoformat(bb.get("updated_at", datetime.utcnow().isoformat()))
-        )
-
-    if prices.get("best_sell"):
-        bs = prices["best_sell"]
-        best_sell = ExchangePriceResponse(
-            exchange=bs.get("exchange", ""),
-            display_name=bs.get("display_name", ""),
-            crypto=bs.get("crypto", crypto),
-            fiat=bs.get("fiat", fiat),
-            buy_price=bs.get("buy_price", 0),
-            sell_price=bs.get("sell_price", 0),
-            spread=bs.get("spread", 0),
-            spread_percent=bs.get("spread_percent", 0),
-            updated_at=datetime.fromisoformat(bs.get("updated_at", datetime.utcnow().isoformat()))
-        )
+    best_buy = (
+        _to_exchange_price_response(prices["best_buy"], crypto, fiat)
+        if prices.get("best_buy")
+        else None
+    )
+    best_sell = (
+        _to_exchange_price_response(prices["best_sell"], crypto, fiat)
+        if prices.get("best_sell")
+        else None
+    )
 
     return AllPricesResponse(
         crypto=crypto.upper(),
@@ -80,6 +70,7 @@ async def get_all_prices(
         exchanges=exchanges,
         best_buy=best_buy,
         best_sell=best_sell,
+        exchange_statuses=prices.get("exchange_statuses"),
         updated_at=datetime.fromisoformat(prices.get("updated_at", datetime.utcnow().isoformat()))
     )
 

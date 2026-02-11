@@ -69,8 +69,8 @@ class QuidaxAPI(BaseExchangeScraper):
                         "high_24h": float(ticker.get("high", 0)),
                         "low_24h": float(ticker.get("low", 0))
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"get_ticker({pair})", e)
 
         return {
             "buy_price": 0,
@@ -89,8 +89,8 @@ class QuidaxAPI(BaseExchangeScraper):
 
                 if response.status_code == 200:
                     return response.json().get("data", {})
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error("get_all_tickers", e)
 
         return {}
 
@@ -105,7 +105,7 @@ class QuidaxAPI(BaseExchangeScraper):
 
                 if response.status_code == 200:
                     return response.json().get("data", {})
-        except Exception:
-            pass
+        except Exception as e:
+            self._log_error(f"get_orderbook({pair})", e)
 
         return {}

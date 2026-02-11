@@ -5,7 +5,7 @@ celery_app = Celery(
     "naijatrade",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.crypto_tasks"]
+    include=["app.tasks.crypto_tasks", "app.tasks.stock_tasks"]
 )
 
 celery_app.conf.update(
@@ -22,6 +22,10 @@ celery_app.conf.update(
         "check-opportunities-every-minute": {
             "task": "app.tasks.crypto_tasks.check_arbitrage_opportunities",
             "schedule": 60.0,
+        },
+        "refresh-ngx-every-5-min": {
+            "task": "app.tasks.stock_tasks.refresh_ngx_data",
+            "schedule": 300.0,  # Every 5 minutes
         },
     },
 )

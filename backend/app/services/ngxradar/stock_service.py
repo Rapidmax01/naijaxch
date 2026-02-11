@@ -14,7 +14,7 @@ class StockService:
 
     def __init__(self, db: Session):
         self.db = db
-        self.data_provider = NGXDataProvider(use_sample=True)  # Use sample for now
+        self.data_provider = NGXDataProvider(use_sample=False)
 
     async def sync_stocks(self) -> int:
         """Sync stocks from data provider to database."""

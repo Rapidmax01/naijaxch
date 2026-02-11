@@ -1,8 +1,13 @@
 import httpx
+import logging
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 from datetime import datetime, date
 import re
+
+from app.core.redis import redis_client
+
+logger = logging.getLogger(__name__)
 
 
 class NGXScraper:
@@ -56,7 +61,7 @@ class NGXScraper:
                 if response.status_code == 200:
                     return self._parse_ngx_page(response.text)
         except Exception as e:
-            print(f"NGX fetch error: {e}")
+            logger.error("NGX fetch error: %s", e)
 
         return []
 
@@ -76,7 +81,7 @@ class NGXScraper:
                 if response.status_code == 200:
                     return self._parse_stocksng_page(response.text)
         except Exception as e:
-            print(f"Stocks.ng fetch error: {e}")
+            logger.error("Stocks.ng fetch error: %s", e)
 
         return []
 
@@ -129,9 +134,130 @@ class NGXScraper:
                                 except Exception:
                                     continue
         except Exception as e:
-            print(f"AFX fetch error: {e}")
+            logger.error("AFX fetch error: %s", e)
 
         return stocks
+
+    async def _fetch_summary_from_afx(self) -> Optional[Dict]:
+        """Fetch market summary (ASI, market cap, etc.) from afx.kwayisi.org/ngx/."""
+        url = "https://afx.kwayisi.org/ngx/"
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                    follow_redirects=True
+                )
+
+                if response.status_code != 200:
+                    return None
+
+                soup = BeautifulSoup(response.text, "html.parser")
+
+                # The AFX page has summary data in <p> or header elements before the table.
+                # Look for the ASI value - typically shown as a large number with
+                # associated change, % change, market cap, volume, value, deals.
+                summary = self._default_market_summary()
+
+                # Strategy: find all text content before the stock table
+                # The page structure has summary stats in <b> or header tags
+                # Look for the main index section
+                main = soup.find("main") or soup.find("body")
+                if not main:
+                    return None
+
+                # Get all text blocks before the table
+                table = soup.find("table")
+                if not table:
+                    return None
+
+                # Find summary section - AFX uses <b> tags and <span> for the index data
+                # Look for bold elements that contain large numbers (ASI)
+                bold_elements = main.find_all("b")
+                for b in bold_elements:
+                    text = b.get_text(strip=True)
+                    num = self._parse_number(text)
+                    # ASI is typically > 50,000
+                    if num > 50000:
+                        summary["asi"] = num
+                        break
+
+                # Look for change values near ASI - typically in spans after the bold ASI
+                # Find all spans that might contain change data
+                spans = main.find_all("span")
+                for span in spans:
+                    text = span.get_text(strip=True)
+                    # Look for point change (e.g., "+2,877.36" or "-500.00")
+                    if text and (text.startswith("+") or text.startswith("-") or text.startswith("−")):
+                        # Check if it's a percentage
+                        if "%" in text:
+                            pct = self._parse_number(text.replace("+", "").replace("−", "-"))
+                            if text.startswith("−"):
+                                pct = -abs(pct)
+                            if abs(pct) < 20:  # Reasonable % change
+                                summary["asi_change_percent"] = pct
+                        else:
+                            change = self._parse_number(text.replace("+", "").replace("−", "-"))
+                            if text.startswith("−"):
+                                change = -abs(change)
+                            if abs(change) < 50000:  # Reasonable point change
+                                summary["asi_change"] = change
+
+                # Look for market cap, volume, value, deals in definition-list or table-like structures
+                # AFX often uses <dt>/<dd> or label/value pairs
+                dts = main.find_all("dt")
+                for dt in dts:
+                    label = dt.get_text(strip=True).lower()
+                    dd = dt.find_next_sibling("dd")
+                    if not dd:
+                        continue
+                    val_text = dd.get_text(strip=True)
+
+                    if "cap" in label:
+                        summary["market_cap"] = self._parse_large_number(val_text)
+                    elif "volume" in label:
+                        summary["volume"] = int(self._parse_large_number(val_text))
+                    elif "value" in label:
+                        summary["value"] = self._parse_large_number(val_text)
+                    elif "deal" in label:
+                        summary["deals"] = int(self._parse_number(val_text))
+
+                # If we got a valid ASI, return the summary
+                if summary["asi"] > 0:
+                    logger.info("AFX market summary fetched: ASI=%.2f", summary["asi"])
+                    return summary
+
+        except Exception as e:
+            logger.error("AFX market summary fetch error: %s", e)
+
+        return None
+
+    def _parse_large_number(self, text: str) -> float:
+        """Parse large numbers with T/B/M/K suffixes (e.g., '108.5T', '7.2B')."""
+        if not text:
+            return 0.0
+        text = text.strip().upper().replace(",", "")
+        # Remove currency symbols
+        text = re.sub(r"[₦$€£]", "", text).strip()
+        multiplier = 1
+        if text.endswith("T"):
+            multiplier = 1_000_000_000_000
+            text = text[:-1]
+        elif text.endswith("B"):
+            multiplier = 1_000_000_000
+            text = text[:-1]
+        elif text.endswith("M"):
+            multiplier = 1_000_000
+            text = text[:-1]
+        elif text.endswith("K"):
+            multiplier = 1_000
+            text = text[:-1]
+        try:
+            return float(text) * multiplier
+        except ValueError:
+            return 0.0
 
     def _parse_volume(self, text: str) -> int:
         """Parse volume with K/M/B suffixes."""
@@ -217,9 +343,16 @@ class NGXScraper:
         return stocks
 
     async def get_market_summary(self) -> Dict:
-        """Get NGX All Share Index and market summary."""
-        url = f"{self.base_url}/exchange/data/market-statistics/"
+        """Get NGX All Share Index and market summary.
+        Tries AFX first (primary), then ngxgroup.com, then defaults to zeros.
+        """
+        # Try AFX first (most reliable)
+        summary = await self._fetch_summary_from_afx()
+        if summary and summary.get("asi", 0) > 0:
+            return summary
 
+        # Fallback to NGX official
+        url = f"{self.base_url}/exchange/data/market-statistics/"
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -230,9 +363,11 @@ class NGXScraper:
                 )
 
                 if response.status_code == 200:
-                    return self._parse_market_summary(response.text)
+                    parsed = self._parse_market_summary(response.text)
+                    if parsed.get("asi", 0) > 0:
+                        return parsed
         except Exception as e:
-            print(f"Market summary error: {e}")
+            logger.error("NGX market summary error: %s", e)
 
         return self._default_market_summary()
 
@@ -360,37 +495,52 @@ SAMPLE_NGX_STOCKS = [
 
 class NGXDataProvider:
     """
-    Provides NGX stock data with fallback to sample data.
-    Use this in development or when scraping fails.
+    Provides NGX stock data with Redis caching and fallback to sample data.
     """
+
+    CACHE_TTL = 300  # 5 minutes
 
     def __init__(self, use_sample: bool = False):
         self.scraper = NGXScraper()
         self.use_sample = use_sample
 
     async def get_all_stocks(self) -> List[Dict]:
-        """Get all stocks, with sample data fallback."""
+        """Get all stocks, checking Redis cache first, with sample data fallback."""
         if self.use_sample:
             return self._get_sample_stocks()
+
+        # Check Redis cache
+        cached = redis_client.get_json("ngx:stocks")
+        if cached:
+            return cached
 
         stocks = await self.scraper.get_all_stocks()
 
         if not stocks:
-            print("Using sample NGX data (live data unavailable)")
+            logger.warning("Using sample NGX data (live data unavailable)")
             return self._get_sample_stocks()
 
+        # Cache in Redis
+        redis_client.set_json("ngx:stocks", stocks, expire_seconds=self.CACHE_TTL)
         return stocks
 
     async def get_market_summary(self) -> Dict:
-        """Get market summary with sample data fallback."""
+        """Get market summary, checking Redis cache first, with sample data fallback."""
         if self.use_sample:
             return self._get_sample_summary()
+
+        # Check Redis cache
+        cached = redis_client.get_json("ngx:market_summary")
+        if cached:
+            return cached
 
         summary = await self.scraper.get_market_summary()
 
         if summary.get("asi", 0) == 0:
             return self._get_sample_summary()
 
+        # Cache in Redis
+        redis_client.set_json("ngx:market_summary", summary, expire_seconds=self.CACHE_TTL)
         return summary
 
     async def get_top_gainers(self, limit: int = 10) -> List[Dict]:
@@ -424,13 +574,13 @@ class NGXDataProvider:
         return stocks
 
     def _get_sample_summary(self) -> Dict:
-        """Return sample market summary (Updated Jan 2026)."""
+        """Return sample market summary (Updated 10 Feb 2026)."""
         from datetime import date
         return {
-            "asi": 105832.45,
-            "asi_change": 456.78,
-            "asi_change_percent": 0.43,
-            "market_cap": 65800000000000,  # 65.8 trillion
+            "asi": 176809.43,
+            "asi_change": 2877.36,
+            "asi_change_percent": 1.65,
+            "market_cap": 108500000000000,  # 108.5 trillion
             "volume": 285000000,
             "value": 7200000000,  # 7.2 billion
             "deals": 8456,

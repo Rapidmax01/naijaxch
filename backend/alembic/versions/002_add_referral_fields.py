@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers
 revision = "002_add_referral"
-down_revision = "001_add_google_oauth_fields"
+down_revision = "001_google_oauth"
 branch_labels = None
 depends_on = None
 

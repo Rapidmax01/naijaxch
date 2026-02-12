@@ -13,11 +13,14 @@ class User(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
     phone = Column(String(20), nullable=True)
     telegram_chat_id = Column(BigInteger, nullable=True)
+
+    auth_provider = Column(String(20), default="email", nullable=False)
+    google_id = Column(String(255), nullable=True, unique=True)
 
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)

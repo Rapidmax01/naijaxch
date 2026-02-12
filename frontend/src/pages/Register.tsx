@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
-import { register, login, getCurrentUser } from '../services/auth'
+import { register, login, getCurrentUser, googleAuth } from '../services/auth'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function Register() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState({
     email: '',
@@ -22,6 +25,58 @@ export default function Register() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
+
+  const handleGoogleResponse = async (response: { credential: string }) => {
+    setError('')
+    setIsLoading(true)
+    try {
+      const tokens = await googleAuth(response.credential)
+      const user = await getCurrentUser(tokens.access_token)
+      setAuth(user, tokens)
+      navigate('/arb')
+    } catch (err: unknown) {
+      let errorMessage = 'Google sign-in failed. Please try again.'
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { detail?: string } } }
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        }
+      }
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      })
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: googleButtonRef.current.offsetWidth,
+        text: 'signup_with',
+      })
+    }
+
+    if (window.google?.accounts?.id) {
+      initGoogle()
+    } else {
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval)
+          initGoogle()
+        }
+      }, 100)
+      return () => clearInterval(interval)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -186,6 +241,21 @@ export default function Register() {
             )}
           </button>
         </form>
+
+        {GOOGLE_CLIENT_ID && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">or</span>
+              </div>
+            </div>
+
+            <div ref={googleButtonRef} className="flex justify-center" />
+          </>
+        )}
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{' '}

@@ -72,3 +72,8 @@ class PasswordReset(BaseModel):
 class PasswordResetRequest(BaseModel):
     """Schema for requesting password reset."""
     email: EmailStr
+
+
+class GoogleAuthRequest(BaseModel):
+    """Schema for Google OAuth sign-in."""
+    token: str

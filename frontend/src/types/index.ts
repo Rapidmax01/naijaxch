@@ -7,6 +7,7 @@ export interface User {
   telegram_chat_id?: number
   is_active: boolean
   is_verified: boolean
+  auth_provider?: string
   created_at: string
   last_login?: string
 }

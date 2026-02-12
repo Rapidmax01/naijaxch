@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime
+import logging
+
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from app.core.database import get_db
 from app.core.security import (
@@ -11,6 +15,7 @@ from app.core.security import (
     get_current_user,
     decode_token
 )
+from app.config import settings
 from app.models.user import User
 from app.models.subscription import Subscription, ProductType, PlanType
 from app.services.email import email_service
@@ -21,8 +26,11 @@ from app.schemas.user import (
     UserLogin,
     Token,
     PasswordResetRequest,
-    PasswordReset
+    PasswordReset,
+    GoogleAuthRequest
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -92,7 +100,19 @@ async def login(
     """
     user = db.query(User).filter(User.email == credentials.email).first()
 
-    if not user or not verify_password(credentials.password, user.password_hash):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account uses Google sign-in. Please sign in with Google."
+        )
+
+    if not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -276,3 +296,103 @@ async def confirm_password_reset(
     db.commit()
 
     return {"message": "Password reset successfully"}
+
+
+@router.post("/google", response_model=Token)
+async def google_auth(
+    request: GoogleAuthRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate with Google OAuth.
+
+    Verifies the Google ID token, finds or creates the user, and returns JWT tokens.
+    """
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google sign-in is not configured"
+        )
+
+    # Verify the Google ID token
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            request.token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token"
+        )
+
+    google_id = idinfo["sub"]
+    email = idinfo.get("email")
+    email_verified = idinfo.get("email_verified", False)
+
+    if not email or not email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account email is not verified"
+        )
+
+    # Look up user by google_id first, then by email
+    user = db.query(User).filter(User.google_id == google_id).first()
+
+    if not user:
+        user = db.query(User).filter(User.email == email).first()
+
+        if user:
+            # Existing email/password user — link Google account
+            user.google_id = google_id
+            user.auth_provider = "google"
+        else:
+            # New user — create account
+            user = User(
+                email=email,
+                first_name=idinfo.get("given_name"),
+                last_name=idinfo.get("family_name"),
+                auth_provider="google",
+                google_id=google_id,
+                is_verified=True,
+            )
+            db.add(user)
+            db.flush()
+
+            # Create free subscriptions for both products
+            for product in [ProductType.ARBSCANNER, ProductType.NGXRADAR]:
+                subscription = Subscription(
+                    user_id=user.id,
+                    product=product.value,
+                    plan=PlanType.FREE.value
+                )
+                db.add(subscription)
+
+            # Send welcome email in background
+            background_tasks.add_task(
+                email_service.send_welcome_email,
+                to=user.email,
+                name=user.first_name or user.email.split("@")[0]
+            )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is deactivated"
+        )
+
+    # Update last login
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+
+    # Create tokens
+    access_token = create_access_token(data={"sub": str(user.id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token
+    )

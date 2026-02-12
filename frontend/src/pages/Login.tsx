@@ -1,18 +1,87 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
-import { login, getCurrentUser } from '../services/auth'
+import { login, getCurrentUser, googleAuth } from '../services/auth'
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void
+        }
+      }
+    }
+  }
+}
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function Login() {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogleResponse = async (response: { credential: string }) => {
+    setError('')
+    setIsLoading(true)
+    try {
+      const tokens = await googleAuth(response.credential)
+      const user = await getCurrentUser(tokens.access_token)
+      setAuth(user, tokens)
+      navigate('/arb')
+    } catch (err: unknown) {
+      let errorMessage = 'Google sign-in failed. Please try again.'
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { detail?: string } } }
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        }
+      }
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      })
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: googleButtonRef.current.offsetWidth,
+        text: 'signin_with',
+      })
+    }
+
+    if (window.google?.accounts?.id) {
+      initGoogle()
+    } else {
+      // GSI script still loading — wait for it
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval)
+          initGoogle()
+        }
+      }, 100)
+      return () => clearInterval(interval)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,6 +177,21 @@ export default function Login() {
             )}
           </button>
         </form>
+
+        {GOOGLE_CLIENT_ID && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">or</span>
+              </div>
+            </div>
+
+            <div ref={googleButtonRef} className="flex justify-center" />
+          </>
+        )}
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{' '}

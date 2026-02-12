@@ -31,6 +31,11 @@ export async function getCurrentUser(token?: string): Promise<User> {
   return response.data
 }
 
+export async function googleAuth(token: string): Promise<AuthTokens> {
+  const response = await api.post<AuthTokens>('/auth/google', { token })
+  return response.data
+}
+
 export async function refreshToken(refresh_token: string): Promise<AuthTokens> {
   const response = await api.post<AuthTokens>('/auth/refresh', null, {
     params: { refresh_token },

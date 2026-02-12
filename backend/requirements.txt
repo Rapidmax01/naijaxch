@@ -19,6 +19,7 @@ celery==5.3.6
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.1.2
+google-auth>=2.0.0
 
 # HTTP client
 httpx>=0.25.0

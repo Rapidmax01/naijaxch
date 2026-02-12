@@ -43,6 +43,7 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY}
       - FROM_EMAIL=${FROM_EMAIL:-hello@naijaxch.com}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     restart: unless-stopped
     depends_on:
       db:
@@ -57,7 +58,10 @@ services:
 
   # Frontend
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     restart: unless-stopped
     depends_on:
       - backend

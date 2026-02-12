@@ -14,6 +14,7 @@ from app.core.database import Base
 from app.models import user, subscription
 from app.models.arbscanner import exchange, price, opportunity, alert
 from app.models.ngxradar import stock, alert as ngx_alert, watchlist, dividend
+from app.models import portfolio, dca, news, signal, airdrop
 
 config = context.config
 

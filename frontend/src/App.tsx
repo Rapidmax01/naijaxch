@@ -15,6 +15,14 @@ import StockDetail from './pages/ngxradar/StockDetail'
 import Screener from './pages/ngxradar/Screener'
 import Watchlist from './pages/ngxradar/Watchlist'
 import StockAlerts from './pages/ngxradar/StockAlerts'
+import P2PComparator from './pages/P2PComparator'
+import PortfolioPage from './pages/portfolio/PortfolioPage'
+import DefiYields from './pages/DefiYields'
+import NewsFeed from './pages/NewsFeed'
+import SavingsCalculator from './pages/SavingsCalculator'
+import DcaTracker from './pages/dca/DcaTracker'
+import Signals from './pages/Signals'
+import Airdrops from './pages/Airdrops'
 import { useAuthStore } from './store/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -63,6 +71,44 @@ function App() {
           <Route path="watchlist" element={<Watchlist />} />
           <Route path="alerts" element={<StockAlerts />} />
         </Route>
+
+        {/* P2P Rate Comparator */}
+        <Route path="p2p" element={<P2PComparator />} />
+
+        {/* Crypto Portfolio Tracker (Auth required) */}
+        <Route
+          path="portfolio"
+          element={
+            <PrivateRoute>
+              <PortfolioPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* DeFi Yield Finder */}
+        <Route path="defi" element={<DefiYields />} />
+
+        {/* News Feed */}
+        <Route path="news" element={<NewsFeed />} />
+
+        {/* Savings Calculator */}
+        <Route path="calculator" element={<SavingsCalculator />} />
+
+        {/* DCA Tracker (Auth required) */}
+        <Route
+          path="dca"
+          element={
+            <PrivateRoute>
+              <DcaTracker />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Trading Signals */}
+        <Route path="signals" element={<Signals />} />
+
+        {/* Airdrop Tracker */}
+        <Route path="airdrops" element={<Airdrops />} />
       </Route>
     </Routes>
   )

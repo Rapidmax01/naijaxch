@@ -198,3 +198,198 @@ export interface Dividend {
   payment_date?: string
   year?: number
 }
+
+// P2P Comparator Types
+export interface P2PComparison {
+  crypto: string
+  cheapest_buy: ExchangePrice | null
+  best_sell: ExchangePrice | null
+  max_spread: number
+  max_spread_percent: number
+  buy_ranked: ExchangePrice[]
+  sell_ranked: ExchangePrice[]
+  all_exchanges: ExchangePrice[]
+  updated_at: string
+}
+
+// Portfolio Types
+export interface PortfolioHolding {
+  id: string
+  portfolio_id: string
+  crypto: string
+  amount: number
+  buy_price_ngn: number
+  notes?: string
+  added_at: string
+  current_price_ngn?: number
+  current_value_ngn?: number
+  cost_basis_ngn?: number
+  pnl_ngn?: number
+  pnl_percent?: number
+}
+
+export interface Portfolio {
+  id: string
+  user_id: string
+  name: string
+  created_at: string
+  holdings: PortfolioHolding[]
+}
+
+export interface PortfolioSummary {
+  portfolio: Portfolio
+  total_value_ngn: number
+  total_cost_ngn: number
+  total_pnl_ngn: number
+  total_pnl_percent: number
+  allocation: { crypto: string; value: number; percent: number }[]
+}
+
+// DeFi Yield Types
+export interface DefiPool {
+  pool: string
+  chain: string
+  project: string
+  symbol: string
+  tvl_usd: number
+  apy: number
+  apy_base?: number
+  apy_reward?: number
+  il_risk?: string
+  pool_url?: string
+}
+
+export interface DefiYieldsResponse {
+  pools: DefiPool[]
+  total: number
+  chains: string[]
+}
+
+// News Types
+export interface NewsItem {
+  id: string
+  title: string
+  source: string
+  url: string
+  summary?: string
+  image_url?: string
+  category: string
+  published_at?: string
+  fetched_at: string
+}
+
+export interface NewsFeedResponse {
+  items: NewsItem[]
+  total: number
+  sources: string[]
+}
+
+// Savings Calculator Types
+export interface InvestmentRate {
+  name: string
+  category: string
+  rates: Record<string, number>
+  risk: string
+}
+
+export interface CalcResult {
+  key: string
+  name: string
+  category: string
+  risk: string
+  annual_rate: number
+  final_value: number
+  total_return: number
+  return_percent: number
+  growth_curve: { month: number; value: number }[]
+}
+
+export interface CalcCompareResponse {
+  amount_ngn: number
+  duration: string
+  months: number
+  results: CalcResult[]
+  winner: CalcResult | null
+}
+
+// DCA Types
+export interface DcaEntry {
+  id: string
+  plan_id: string
+  date: string
+  amount_ngn: number
+  price_per_unit_ngn: number
+  crypto_amount: number
+  exchange?: string
+  notes?: string
+  created_at: string
+}
+
+export interface DcaPlan {
+  id: string
+  user_id: string
+  name: string
+  crypto: string
+  target_amount_ngn?: number
+  frequency: string
+  start_date?: string
+  is_active: boolean
+  created_at: string
+  entries: DcaEntry[]
+  total_invested_ngn?: number
+  total_crypto?: number
+  avg_cost_ngn?: number
+  current_price_ngn?: number
+  current_value_ngn?: number
+  pnl_ngn?: number
+  pnl_percent?: number
+}
+
+// Trading Signal Types
+export interface TradingSignal {
+  id: string
+  asset_type: string
+  asset_symbol: string
+  direction: string
+  entry_price: number
+  target_price?: number
+  stop_loss?: number
+  reasoning?: string
+  timeframe?: string
+  status: string
+  result?: string
+  result_percent?: number
+  is_premium: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SignalStats {
+  total_signals: number
+  open_signals: number
+  closed_signals: number
+  win_rate: number
+  avg_return: number
+}
+
+// Airdrop Types
+export interface Airdrop {
+  id: string
+  name: string
+  project: string
+  description?: string
+  category: string
+  reward_estimate?: string
+  reward_token?: string
+  requirements?: string
+  steps?: string
+  url?: string
+  image_url?: string
+  status: string
+  difficulty: string
+  deadline?: string
+  start_date?: string
+  is_verified: boolean
+  is_featured: boolean
+  created_at: string
+}

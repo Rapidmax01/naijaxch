@@ -5,7 +5,7 @@ celery_app = Celery(
     "naijatrade",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.crypto_tasks", "app.tasks.stock_tasks"]
+    include=["app.tasks.crypto_tasks", "app.tasks.stock_tasks", "app.tasks.defi_tasks", "app.tasks.news_tasks"]
 )
 
 celery_app.conf.update(
@@ -30,6 +30,14 @@ celery_app.conf.update(
         "check-stock-alerts-every-minute": {
             "task": "app.tasks.stock_tasks.check_stock_alerts",
             "schedule": 60.0,
+        },
+        "fetch-defi-yields-every-30min": {
+            "task": "app.tasks.defi_tasks.fetch_defi_yields",
+            "schedule": 1800.0,
+        },
+        "fetch-news-every-15min": {
+            "task": "app.tasks.news_tasks.fetch_news_feeds",
+            "schedule": 900.0,
         },
     },
 )

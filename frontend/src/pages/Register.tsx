@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { register, login, getCurrentUser, googleAuth } from '../services/auth'
@@ -8,6 +8,8 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function Register() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const referralCode = searchParams.get('ref') || ''
   const { setAuth } = useAuthStore()
   const googleButtonRef = useRef<HTMLDivElement>(null)
 
@@ -30,7 +32,7 @@ export default function Register() {
     setError('')
     setIsLoading(true)
     try {
-      const tokens = await googleAuth(response.credential)
+      const tokens = await googleAuth(response.credential, referralCode || undefined)
       const user = await getCurrentUser(tokens.access_token)
       setAuth(user, tokens)
       navigate('/arb')
@@ -100,6 +102,7 @@ export default function Register() {
         password: formData.password,
         first_name: formData.first_name || undefined,
         last_name: formData.last_name || undefined,
+        referral_code: referralCode || undefined,
       })
 
       // Auto-login after registration
@@ -135,6 +138,12 @@ export default function Register() {
     <div className="max-w-md mx-auto">
       <div className="card">
         <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
+
+        {referralCode && (
+          <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 text-center text-sm">
+            You were referred by a friend! You'll both benefit from signing up.
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4">

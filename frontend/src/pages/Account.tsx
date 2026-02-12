@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { User, CreditCard, Bell, Shield, LogOut, ChevronRight, Zap, BarChart3, MessageCircle, Copy, Check, ExternalLink } from 'lucide-react'
+import { User, CreditCard, Bell, Shield, LogOut, ChevronRight, Zap, BarChart3, MessageCircle, Copy, Check, ExternalLink, Gift, Users } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useMySubscriptions, useCancelSubscription } from '../hooks/useSubscription'
 import { useTelegramStatus, useTelegramLinkToken, useUnlinkTelegram, useTestTelegram } from '../hooks/useTelegram'
 import { formatNaira } from '../services/subscriptions'
+import { useQuery } from '@tanstack/react-query'
+import api from '../services/api'
 
 function SubscriptionCard({
   subscription,
@@ -266,6 +268,87 @@ function TelegramSection() {
   )
 }
 
+function ReferralSection() {
+  const [copied, setCopied] = useState(false)
+  const { data, isLoading } = useQuery({
+    queryKey: ['referral'],
+    queryFn: async () => {
+      const res = await api.get('/auth/referral')
+      return res.data as { referral_code: string; referral_count: number; referral_link: string }
+    },
+  })
+
+  const handleCopy = () => {
+    if (data?.referral_link) {
+      navigator.clipboard.writeText(data.referral_link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <section id="referral">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        Refer & Earn
+      </h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <Gift className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Invite friends to NaijaXch
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Share your link and help your friends find trading opportunities
+                </p>
+              </div>
+            </div>
+
+            {/* Referral link */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={data?.referral_link || ''}
+                className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-mono"
+              />
+              <button
+                onClick={handleCopy}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Users className="w-4 h-4" />
+              <span>
+                <strong className="text-gray-900 dark:text-white">{data?.referral_count ?? 0}</strong>{' '}
+                {(data?.referral_count ?? 0) === 1 ? 'friend' : 'friends'} referred
+              </span>
+            </div>
+
+            {/* Referral code */}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Your referral code: <span className="font-mono font-medium">{data?.referral_code}</span>
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 export default function Account() {
   const { user, logout } = useAuthStore()
   const { data: subscriptions, isLoading } = useMySubscriptions()
@@ -423,6 +506,9 @@ export default function Account() {
 
             {/* Telegram Section */}
             <TelegramSection />
+
+            {/* Referral Section */}
+            <ReferralSection />
 
             {/* Quick Links */}
             <section>

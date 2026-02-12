@@ -55,16 +55,28 @@ async def register(
             detail="Email already registered"
         )
 
+    # Look up referrer if referral code provided
+    referrer = None
+    if user_data.referral_code:
+        referrer = db.query(User).filter(
+            User.referral_code == user_data.referral_code.upper()
+        ).first()
+
     # Create new user
     user = User(
         email=user_data.email,
         password_hash=get_password_hash(user_data.password),
         first_name=user_data.first_name,
         last_name=user_data.last_name,
-        phone=user_data.phone
+        phone=user_data.phone,
+        referred_by=referrer.id if referrer else None
     )
     db.add(user)
     db.flush()
+
+    # Increment referrer's count
+    if referrer:
+        referrer.referral_count = (referrer.referral_count or 0) + 1
 
     # Create free subscriptions for both products
     for product in [ProductType.ARBSCANNER, ProductType.NGXRADAR]:
@@ -219,6 +231,26 @@ async def link_telegram(
     return {"message": "Telegram account linked successfully"}
 
 
+@router.get("/referral")
+async def get_referral_info(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the current user's referral code and stats."""
+    # Ensure user has a referral code
+    if not current_user.referral_code:
+        from app.models.user import generate_referral_code
+        current_user.referral_code = generate_referral_code()
+        db.commit()
+        db.refresh(current_user)
+
+    return {
+        "referral_code": current_user.referral_code,
+        "referral_count": current_user.referral_count or 0,
+        "referral_link": f"{settings.FRONTEND_URL}/register?ref={current_user.referral_code}",
+    }
+
+
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_user)):
     """
@@ -349,6 +381,13 @@ async def google_auth(
             user.google_id = google_id
             user.auth_provider = "google"
         else:
+            # Look up referrer if referral code provided
+            referrer = None
+            if request.referral_code:
+                referrer = db.query(User).filter(
+                    User.referral_code == request.referral_code.upper()
+                ).first()
+
             # New user — create account
             user = User(
                 email=email,
@@ -357,9 +396,14 @@ async def google_auth(
                 auth_provider="google",
                 google_id=google_id,
                 is_verified=True,
+                referred_by=referrer.id if referrer else None,
             )
             db.add(user)
             db.flush()
+
+            # Increment referrer's count
+            if referrer:
+                referrer.referral_count = (referrer.referral_count or 0) + 1
 
             # Create free subscriptions for both products
             for product in [ProductType.ARBSCANNER, ProductType.NGXRADAR]:

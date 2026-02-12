@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import Pricing from './pages/Pricing'
 import PaymentVerify from './pages/PaymentVerify'
 import Account from './pages/Account'
+import NairaRates from './pages/NairaRates'
 import ArbDashboard from './pages/arbscanner/ArbDashboard'
 import Calculator from './pages/arbscanner/Calculator'
 import Alerts from './pages/arbscanner/Alerts'
@@ -29,6 +30,7 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="pricing" element={<Pricing />} />
+        <Route path="naira" element={<NairaRates />} />
         <Route path="payment/verify" element={<PaymentVerify />} />
         <Route
           path="account"

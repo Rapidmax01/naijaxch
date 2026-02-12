@@ -13,6 +13,7 @@ from app.config import settings
 from app.core.database import Base
 from app.models import user, subscription
 from app.models.arbscanner import exchange, price, opportunity, alert
+from app.models.ngxradar import stock, alert as ngx_alert, watchlist, dividend
 
 config = context.config
 

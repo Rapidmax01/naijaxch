@@ -1,8 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { TrendingUp, BarChart3, LogOut, Menu, X, CreditCard, User } from 'lucide-react'
+import { TrendingUp, BarChart3, LogOut, Menu, X, CreditCard, User, DollarSign } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { AdBanner } from '../common/AdBanner'
+import { InstallPrompt } from '../common/InstallPrompt'
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -12,6 +13,7 @@ export default function Layout() {
   const navigation = [
     { name: 'ArbScanner', href: '/arb', icon: TrendingUp },
     { name: 'NGX Radar', href: '/ngx', icon: BarChart3 },
+    { name: 'Naira Rates', href: '/naira', icon: DollarSign },
     { name: 'Pricing', href: '/pricing', icon: CreditCard },
   ]
 
@@ -165,6 +167,9 @@ export default function Layout() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
+
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
 
       {/* Footer */}
       <footer className="bg-white border-t mt-auto">

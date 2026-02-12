@@ -27,5 +27,9 @@ celery_app.conf.update(
             "task": "app.tasks.stock_tasks.refresh_ngx_data",
             "schedule": 300.0,  # Every 5 minutes
         },
+        "check-stock-alerts-every-minute": {
+            "task": "app.tasks.stock_tasks.check_stock_alerts",
+            "schedule": 60.0,
+        },
     },
 )

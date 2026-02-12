@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, subscriptions, telegram
+from app.api.v1 import auth, subscriptions, telegram, naira_rates
 from app.api.v1.arbscanner import prices, opportunities, alerts
 from app.api.v1.ngxradar import stocks, screener, watchlist, alerts as ngx_alerts, dividends
 
@@ -68,6 +68,13 @@ api_router.include_router(
     subscriptions.router,
     prefix="",
     tags=["Subscriptions & Payments"]
+)
+
+# Naira Rates
+api_router.include_router(
+    naira_rates.router,
+    prefix="/naira",
+    tags=["Naira Rates"]
 )
 
 # Telegram routes

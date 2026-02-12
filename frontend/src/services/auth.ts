@@ -11,6 +11,7 @@ interface RegisterRequest {
   password: string
   first_name?: string
   last_name?: string
+  referral_code?: string
 }
 
 export async function login(credentials: LoginRequest): Promise<AuthTokens> {
@@ -31,8 +32,8 @@ export async function getCurrentUser(token?: string): Promise<User> {
   return response.data
 }
 
-export async function googleAuth(token: string): Promise<AuthTokens> {
-  const response = await api.post<AuthTokens>('/auth/google', { token })
+export async function googleAuth(token: string, referral_code?: string): Promise<AuthTokens> {
+  const response = await api.post<AuthTokens>('/auth/google', { token, referral_code })
   return response.data
 }
 

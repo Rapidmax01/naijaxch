@@ -15,6 +15,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for creating a new user."""
     password: str = Field(..., min_length=8)
+    referral_code: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -30,6 +31,8 @@ class UserResponse(UserBase):
     is_active: bool
     is_verified: bool
     telegram_chat_id: Optional[int] = None
+    referral_code: Optional[str] = None
+    referral_count: int = 0
     created_at: datetime
     last_login: Optional[datetime] = None
 
@@ -77,3 +80,4 @@ class PasswordResetRequest(BaseModel):
 class GoogleAuthRequest(BaseModel):
     """Schema for Google OAuth sign-in."""
     token: str
+    referral_code: Optional[str] = None

@@ -1,12 +1,31 @@
-import { ArrowRight, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowRight, TrendingUp, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
 import { formatNaira, formatPercent } from '../../utils/formatters'
-import { getExchangeDisplayName } from '../../utils/exchanges'
+import { getExchangeDisplayName, getExchangeReferralUrl } from '../../utils/exchanges'
 import type { ArbitrageOpportunity } from '../../types'
 
 interface Props {
   opportunity: ArbitrageOpportunity
   highlight?: boolean
   onCalculate?: (opp: ArbitrageOpportunity) => void
+}
+
+function ExchangeName({ exchange, highlight }: { exchange: string; highlight?: boolean }) {
+  const url = getExchangeReferralUrl(exchange)
+  const name = getExchangeDisplayName(exchange)
+  if (url) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`font-bold text-lg capitalize inline-flex items-center gap-1 hover:underline ${highlight ? '' : 'text-gray-900'}`}
+      >
+        {name}
+        <ExternalLink className="w-3 h-3 opacity-40" />
+      </a>
+    )
+  }
+  return <p className="font-bold text-lg capitalize">{name}</p>
 }
 
 export function OpportunityCard({ opportunity, highlight, onCalculate }: Props) {
@@ -35,9 +54,7 @@ export function OpportunityCard({ opportunity, highlight, onCalculate }: Props) 
           }`}>
             Buy on
           </p>
-          <p className="font-bold text-lg capitalize">
-            {getExchangeDisplayName(opportunity.buy_exchange)}
-          </p>
+          <ExchangeName exchange={opportunity.buy_exchange} highlight={highlight} />
           <p className={`text-xl font-bold ${highlight ? '' : 'text-green-600'}`}>
             {formatNaira(opportunity.buy_price)}
           </p>
@@ -56,9 +73,7 @@ export function OpportunityCard({ opportunity, highlight, onCalculate }: Props) 
           }`}>
             Sell on
           </p>
-          <p className="font-bold text-lg capitalize">
-            {getExchangeDisplayName(opportunity.sell_exchange)}
-          </p>
+          <ExchangeName exchange={opportunity.sell_exchange} highlight={highlight} />
           <p className={`text-xl font-bold ${highlight ? '' : 'text-red-600'}`}>
             {formatNaira(opportunity.sell_price)}
           </p>

@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { RefreshCw, ArrowDownCircle, ArrowUpCircle, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react'
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, AlertTriangle, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react'
 import { fetchPrices } from '../../services/arbscanner'
 import { formatNaira, formatRelativeTime } from '../../utils/formatters'
+import { getExchangeReferralUrl } from '../../utils/exchanges'
 import type { ExchangePrice } from '../../types'
 
 interface Props {
@@ -33,6 +34,19 @@ function StatusDot({ source }: { source?: string }) {
 
 type SortKey = 'exchange' | 'buy_price' | 'sell_price' | 'spread_percent'
 type SortDir = 'asc' | 'desc'
+
+function ExchangeLink({ name, exchangeKey, className }: { name: string; exchangeKey: string; className?: string }) {
+  const url = getExchangeReferralUrl(exchangeKey)
+  if (url) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1 hover:underline ${className ?? ''}`}>
+        {name}
+        <ExternalLink className="w-3 h-3 opacity-40" />
+      </a>
+    )
+  }
+  return <span className={className}>{name}</span>
+}
 
 function getRowStyle(source?: string): string {
   if (source === 'sample') return 'opacity-60 bg-gray-50'
@@ -139,7 +153,9 @@ export function PriceGrid({ crypto }: Props) {
               Best Buy
             </div>
             <div className="font-bold text-lg">{formatNaira(bestBuy.buy_price)}</div>
-            <div className="text-sm text-gray-600">{bestBuy.display_name}</div>
+            <div className="text-sm text-gray-600">
+              <ExchangeLink name={bestBuy.display_name} exchangeKey={bestBuy.exchange} />
+            </div>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-2 text-blue-600 text-sm mb-1">
@@ -147,7 +163,9 @@ export function PriceGrid({ crypto }: Props) {
               Best Sell
             </div>
             <div className="font-bold text-lg">{formatNaira(bestSell.sell_price)}</div>
-            <div className="text-sm text-gray-600">{bestSell.display_name}</div>
+            <div className="text-sm text-gray-600">
+              <ExchangeLink name={bestSell.display_name} exchangeKey={bestSell.exchange} />
+            </div>
           </div>
         </div>
       )}
@@ -176,7 +194,7 @@ export function PriceGrid({ crypto }: Props) {
               <tr key={exchange.exchange} className={`border-b last:border-0 ${getRowStyle(exchange.data_source)}`}>
                 <td className="py-3">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{exchange.display_name}</span>
+                    <ExchangeLink name={exchange.display_name} exchangeKey={exchange.exchange} className="font-medium" />
                     <StatusDot source={exchange.data_source} />
                   </div>
                 </td>
@@ -208,7 +226,7 @@ export function PriceGrid({ crypto }: Props) {
         {sortedExchanges.map((exchange: ExchangePrice) => (
           <div key={exchange.exchange} className={`rounded-lg border p-4 ${getRowStyle(exchange.data_source)}`}>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold">{exchange.display_name}</span>
+              <ExchangeLink name={exchange.display_name} exchangeKey={exchange.exchange} className="font-semibold" />
               <StatusDot source={exchange.data_source} />
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">

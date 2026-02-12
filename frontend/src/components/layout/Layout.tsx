@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { TrendingUp, BarChart3, LogOut, Menu, X, CreditCard, User } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
+import { AdBanner } from '../common/AdBanner'
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -156,6 +157,9 @@ export default function Layout() {
           </div>
         )}
       </header>
+
+      {/* Leaderboard ad */}
+      <AdBanner adSlot="LEADERBOARD_SLOT" adFormat="horizontal" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4" />
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

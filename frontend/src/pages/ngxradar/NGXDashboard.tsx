@@ -5,6 +5,7 @@ import { MarketSummary } from '../../components/ngxradar/MarketSummary'
 import { TopMovers } from '../../components/ngxradar/TopMovers'
 import { StockTable } from '../../components/ngxradar/StockTable'
 import { ScreenerFilters, type FilterState } from '../../components/ngxradar/ScreenerFilters'
+import { AdBanner } from '../../components/common/AdBanner'
 
 export default function NGXDashboard() {
   const [filters, setFilters] = useState<FilterState>({})
@@ -81,6 +82,9 @@ export default function NGXDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard ad */}
+      <AdBanner adSlot="NGX_DASHBOARD_SLOT" adFormat="horizontal" />
     </div>
   )
 }

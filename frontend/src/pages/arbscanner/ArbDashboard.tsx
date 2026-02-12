@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Calculator, Bell, Settings } from 'lucide-react'
 import { PriceGrid } from '../../components/arbscanner/PriceGrid'
 import { OpportunityList } from '../../components/arbscanner/OpportunityList'
+import { AdBanner } from '../../components/common/AdBanner'
 import type { ArbitrageOpportunity } from '../../types'
 
 const CRYPTOS = ['USDT', 'BTC', 'ETH']
@@ -130,6 +131,9 @@ export default function ArbDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard ad */}
+      <AdBanner adSlot="ARB_DASHBOARD_SLOT" adFormat="horizontal" />
     </div>
   )
 }

@@ -3,6 +3,8 @@ import { TrendingUp, BarChart3, Bell, Zap, Users, ArrowRight, CheckCircle, Refre
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
+import { getExchangeReferralUrl } from '../utils/exchanges'
+import { AdBanner } from '../components/common/AdBanner'
 
 function LiveSpread() {
   const { data } = useQuery({
@@ -30,12 +32,12 @@ export default function Home() {
   const { isAuthenticated, user } = useAuthStore()
 
   const exchanges = [
-    { name: 'Luno', type: 'Exchange' },
-    { name: 'Bybit P2P', type: 'P2P' },
-    { name: 'Binance P2P', type: 'P2P' },
-    { name: 'Quidax', type: 'Exchange' },
-    { name: 'Remitano', type: 'P2P' },
-    { name: 'Patricia', type: 'Exchange' },
+    { name: 'Luno', type: 'Exchange', key: 'luno' },
+    { name: 'Bybit P2P', type: 'P2P', key: 'bybit_p2p' },
+    { name: 'Binance P2P', type: 'P2P', key: 'binance_p2p' },
+    { name: 'Quidax', type: 'Exchange', key: 'quidax' },
+    { name: 'Remitano', type: 'P2P', key: 'remitano' },
+    { name: 'Patricia', type: 'Exchange', key: 'patricia' },
   ]
 
   return (
@@ -85,14 +87,21 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Monitoring prices from</p>
           <div className="flex flex-wrap justify-center gap-4">
-            {exchanges.map((ex) => (
-              <div
-                key={ex.name}
-                className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {ex.name}
-              </div>
-            ))}
+            {exchanges.map((ex) => {
+              const url = getExchangeReferralUrl(ex.key)
+              const pill = (
+                <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {ex.name}
+                </div>
+              )
+              return url ? (
+                <a key={ex.name} href={url} target="_blank" rel="noopener noreferrer" className="hover:scale-105 transition-transform">
+                  {pill}
+                </a>
+              ) : (
+                <div key={ex.name}>{pill}</div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -137,6 +146,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Ad between sections */}
+      <AdBanner adSlot="HOME_MID_SLOT" adFormat="horizontal" className="my-4" />
 
       {/* Products Section */}
       <section className="grid md:grid-cols-2 gap-8">

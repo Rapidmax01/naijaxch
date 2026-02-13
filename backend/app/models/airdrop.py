@@ -25,6 +25,7 @@ class Airdrop(Base):
     start_date = Column(Date, nullable=True)
     is_verified = Column(Boolean, default=False)
     is_featured = Column(Boolean, default=False)
+    is_auto_curated = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

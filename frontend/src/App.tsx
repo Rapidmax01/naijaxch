@@ -23,11 +23,26 @@ import SavingsCalculator from './pages/SavingsCalculator'
 import DcaTracker from './pages/dca/DcaTracker'
 import Signals from './pages/Signals'
 import Airdrops from './pages/Airdrops'
+import AdminPanel from './pages/AdminPanel'
 import { useAuthStore } from './store/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated) return <Navigate to="/login" />
+  if (!user?.is_admin) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
+        <p className="text-gray-500 mt-2">You do not have admin privileges.</p>
+      </div>
+    )
+  }
+  return <>{children}</>
 }
 
 function App() {
@@ -109,6 +124,16 @@ function App() {
 
         {/* Airdrop Tracker */}
         <Route path="airdrops" element={<Airdrops />} />
+
+        {/* Admin Panel */}
+        <Route
+          path="admin"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
       </Route>
     </Routes>
   )

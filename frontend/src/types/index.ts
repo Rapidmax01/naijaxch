@@ -7,6 +7,7 @@ export interface User {
   telegram_chat_id?: number
   is_active: boolean
   is_verified: boolean
+  is_admin: boolean
   auth_provider?: string
   created_at: string
   last_login?: string
@@ -391,5 +392,6 @@ export interface Airdrop {
   start_date?: string
   is_verified: boolean
   is_featured: boolean
+  is_auto_curated?: boolean
   created_at: string
 }

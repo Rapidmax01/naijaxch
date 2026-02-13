@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_admin_user
 from app.models.signal import TradingSignal
 from app.schemas.signal import SignalCreate, SignalUpdate, SignalResponse, SignalStatsResponse
 
@@ -71,7 +71,7 @@ async def get_signal_stats(db: Session = Depends(get_db)):
 @router.post("/signals")
 async def create_signal(
     data: SignalCreate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """Create a new signal (admin only)."""
@@ -96,7 +96,7 @@ async def create_signal(
 async def update_signal(
     signal_id: str,
     data: SignalUpdate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """Update a signal (admin only)."""

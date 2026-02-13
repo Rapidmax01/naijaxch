@@ -17,6 +17,7 @@ import {
   PiggyBank,
   Signal,
   Gift,
+  Shield,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '../../store/authStore'
@@ -52,6 +53,7 @@ export default function Layout() {
     { name: 'Signals', href: '/signals', icon: Signal },
     { name: 'Airdrops', href: '/airdrops', icon: Gift },
     { name: 'Pricing', href: '/pricing', icon: CreditCard },
+    ...(user?.is_admin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
   ]
 
   const isActive = (path: string) => location.pathname.startsWith(path)

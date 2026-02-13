@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_admin_user
 from app.models.airdrop import Airdrop
 from app.schemas.airdrop import AirdropCreate, AirdropUpdate
 
@@ -54,7 +54,7 @@ async def get_airdrop(airdrop_id: str, db: Session = Depends(get_db)):
 @router.post("/airdrops")
 async def create_airdrop(
     data: AirdropCreate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """Create a new airdrop (admin only)."""
@@ -69,7 +69,7 @@ async def create_airdrop(
 async def update_airdrop(
     airdrop_id: str,
     data: AirdropUpdate,
-    current_user=Depends(get_current_user),
+    current_user=Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """Update an airdrop (admin only)."""
@@ -89,7 +89,7 @@ async def update_airdrop(
 @router.delete("/airdrops/{airdrop_id}")
 async def delete_airdrop(
     airdrop_id: str,
-    current_user=Depends(get_current_user),
+    current_user=Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """Delete an airdrop (admin only)."""
@@ -120,5 +120,6 @@ def _airdrop_to_dict(a: Airdrop) -> dict:
         "start_date": a.start_date.isoformat() if a.start_date else None,
         "is_verified": a.is_verified,
         "is_featured": a.is_featured,
+        "is_auto_curated": a.is_auto_curated,
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }

@@ -55,6 +55,7 @@ class AirdropResponse(BaseModel):
     start_date: Optional[date] = None
     is_verified: bool
     is_featured: bool
+    is_auto_curated: bool = False
     created_at: datetime
 
     class Config:

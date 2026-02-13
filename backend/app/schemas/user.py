@@ -30,6 +30,7 @@ class UserResponse(UserBase):
     id: UUID
     is_active: bool
     is_verified: bool
+    is_admin: bool = False
     telegram_chat_id: Optional[int] = None
     referral_code: Optional[str] = None
     referral_count: int = 0

@@ -35,7 +35,7 @@ export default function Airdrops() {
       fetchAirdrops({
         status,
         category: category || undefined,
-        limit: 200,
+        limit: 100,
         offset: 0,
       }),
   })

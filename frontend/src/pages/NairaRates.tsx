@@ -9,6 +9,8 @@ interface CurrencyRate {
   flag: string
   official: number
   parallel: number
+  buy: number
+  sell: number
   spread: number
   spread_percent: number
 }
@@ -106,13 +108,19 @@ export default function NairaRates() {
                     <p className="text-xl font-bold text-blue-700">{formatNGN(currency.official)}</p>
                   </div>
 
-                  {/* Parallel Rate */}
-                  <div className="flex items-center justify-between bg-green-50 rounded-lg px-4 py-3">
-                    <div>
-                      <p className="text-xs text-green-600 font-medium uppercase">Parallel Rate</p>
-                      <p className="text-sm text-gray-500">Black Market</p>
+                  {/* Parallel Rate - Buy/Sell */}
+                  <div className="bg-green-50 rounded-lg px-4 py-3">
+                    <p className="text-xs text-green-600 font-medium uppercase mb-2">Parallel / Black Market</p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">Buy</p>
+                        <p className="text-lg font-bold text-green-700">{formatNGN(currency.buy || currency.parallel)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">Sell</p>
+                        <p className="text-lg font-bold text-green-700">{formatNGN(currency.sell || currency.parallel)}</p>
+                      </div>
                     </div>
-                    <p className="text-xl font-bold text-green-700">{formatNGN(currency.parallel)}</p>
                   </div>
 
                   {/* Spread */}
@@ -133,8 +141,8 @@ export default function NairaRates() {
             <h3 className="font-semibold text-yellow-900 mb-1">About These Rates</h3>
             <p className="text-yellow-800 text-sm">
               <strong>Official rates</strong> are sourced from the CBN and interbank market.{' '}
-              <strong>Parallel rates</strong> are derived from USDT/NGN P2P trading prices across
-              Nigerian exchanges — the most liquid proxy for the parallel market dollar rate.
+              <strong>Parallel rates</strong> reflect real black market buy/sell prices from
+              currency dealers across Lagos, Abuja, and other major cities.
               Rates update every 5 minutes.
             </p>
           </div>

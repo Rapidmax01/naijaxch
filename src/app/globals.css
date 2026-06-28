@@ -31,9 +31,8 @@
   --warn-wash: #fcf3e2;
   --warn-ink: #8a5a16;
 
-  /* Type */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: var(--font-sans);
+  /* Type — --font-sans / --font-display are defined by next/font on <html>. */
+  --fallback-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --num: 'tnum' 1, 'lnum' 1;
 
   /* Shape */
@@ -62,7 +61,7 @@ body {
   background:
     radial-gradient(1200px 500px at 100% -10%, #f0efe7 0%, rgba(240, 239, 231, 0) 60%),
     var(--bg);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), var(--fallback-sans);
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -75,7 +74,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-display), var(--font-sans), var(--fallback-sans);
   letter-spacing: -0.02em;
   color: var(--ink);
   line-height: 1.12;
@@ -324,11 +323,6 @@ button {
   background: var(--paper-2);
 }
 
-.home__cta a {
-  font-weight: 600;
-  color: var(--ink);
-}
-
 .home__section-head {
   display: flex;
   align-items: baseline;
@@ -348,10 +342,8 @@ button {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.6rem;
 }
-.home__companies a {
-  display: flex;
-  gap: 0.6rem;
-  align-items: baseline;
+.mkt {
+  display: block;
   padding: 0.85rem 1rem;
   background: var(--paper);
   border: 1px solid var(--line);
@@ -361,19 +353,37 @@ button {
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s, transform 0.08s, box-shadow 0.15s;
 }
-.home__companies a:hover {
+.mkt:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+  text-decoration: none;
 }
-.home__companies strong {
-  font-family: var(--font-display);
+.mkt__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.mkt__ticker {
+  font-family: var(--font-display), var(--font-sans), var(--fallback-sans);
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
-.home__sector {
-  margin-left: auto;
+.mkt__sector {
   color: var(--faint);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.mkt__name {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .home__note {
   color: var(--muted);

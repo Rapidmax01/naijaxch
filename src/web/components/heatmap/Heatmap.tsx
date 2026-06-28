@@ -26,19 +26,23 @@ export function Heatmap({ rows }: { rows: ScreenerRow[] }) {
   return (
     <div className="heatmap">
       <div className="pulse" role="group" aria-label="Market pulse">
-        <div className="pulse__stat">
+        <div className="pulse__stat pulse__stat--up">
           <span className="pulse__num pulse__num--up">{pulse.advancers}</span>
           <span className="pulse__label">Advancers</span>
         </div>
-        <div className="pulse__stat">
+        <div className="pulse__stat pulse__stat--down">
           <span className="pulse__num pulse__num--down">{pulse.decliners}</span>
           <span className="pulse__label">Decliners</span>
         </div>
-        <div className="pulse__stat">
+        <div className="pulse__stat pulse__stat--flat">
           <span className="pulse__num">{pulse.unchanged}</span>
           <span className="pulse__label">Unchanged</span>
         </div>
-        <div className="pulse__stat">
+        <div
+          className={`pulse__stat ${
+            pulse.avgChange != null && pulse.avgChange < 0 ? 'pulse__stat--down' : 'pulse__stat--up'
+          }`}
+        >
           <span
             className={`pulse__num ${
               pulse.avgChange != null && pulse.avgChange < 0 ? 'pulse__num--down' : 'pulse__num--up'

@@ -11,6 +11,10 @@ export default async function HomePage() {
         corporate-action-adjusted, end-of-day price series. Tap a timeframe, drag to read any point.
       </p>
 
+      <p className="home__cta">
+        <a href="/portfolio">View a portfolio-level trend →</a>
+      </p>
+
       <h2 className="home__subtitle">Sample companies</h2>
       <ul className="home__companies">
         {companies.map((c) => (

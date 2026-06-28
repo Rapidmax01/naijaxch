@@ -98,8 +98,28 @@ model User {
   watchlist     WatchlistItem[]
   holdings      Holding[]
   passwordResets PasswordResetToken[]
+  subscription  Subscription?
 
   @@map("users")
+}
+
+// Mirror of the user's Paystack subscription (Step 5). The provider holds funds
+// and is the source of truth for payment; this row mirrors status, and
+// `users.tier` is flipped from it via the webhook. We never store card data (G4).
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique @map("user_id")
+  provider         String    @default("paystack")
+  customerCode     String?   @map("customer_code")
+  subscriptionCode String?   @map("subscription_code")
+  planCode         String?   @map("plan_code")
+  status           String    @default("active") // active | non-renewing | cancelled | past_due
+  currentPeriodEnd DateTime? @map("current_period_end")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
 
 // Manual portfolio tracker — one holdings set per user (spec §7). Quantities are

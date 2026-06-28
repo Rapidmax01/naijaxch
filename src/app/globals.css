@@ -658,6 +658,64 @@ body {
   padding: 1.5rem 0;
 }
 
+/* --- Billing / pricing --- */
+.pricing__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.pricing__card {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+.pricing__card--premium {
+  border-color: #6366f1;
+  background: #fafaff;
+}
+.pricing__card h2 {
+  margin: 0;
+}
+.pricing__price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0.75rem;
+}
+.pricing__card ul {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--ink);
+  line-height: 1.7;
+}
+.pricing__active {
+  color: var(--up);
+  font-weight: 700;
+}
+.upgrade__btn {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.upgrade__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.upgrade__error {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--down);
+  font-size: 0.8125rem;
+}
+.account-page__plan-action {
+  margin-left: 0.75rem;
+  font-weight: 400;
+}
+
 /* --- AI summary --- */
 .ai-summary {
   margin: 1.5rem 0;

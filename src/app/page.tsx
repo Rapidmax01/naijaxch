@@ -16,6 +16,7 @@ export default async function HomePage() {
         <a href="/heatmap">Market heatmap →</a>
         <a href="/watchlist">My watchlist →</a>
         <a href="/portfolio">View a portfolio-level trend →</a>
+        <a href="/pricing">Pricing →</a>
       </p>
 
       <h2 className="home__subtitle">Sample companies</h2>

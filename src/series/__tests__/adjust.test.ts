@@ -57,12 +57,21 @@ describe('actionFactor dispatch', () => {
 });
 
 describe('buildAdjustedSeries (back-adjustment)', () => {
+  const row = (date: string, close: number): RawPricePoint => ({
+    ticker: 'DEMO',
+    date,
+    open: close,
+    high: close,
+    low: close,
+    close,
+    volume: 1000,
+  });
   const raw: RawPricePoint[] = [
-    { ticker: 'DEMO', date: '2024-01-01', close: 100, volume: 1000 },
-    { ticker: 'DEMO', date: '2024-01-02', close: 100, volume: 1000 },
+    row('2024-01-01', 100),
+    row('2024-01-02', 100),
     // bonus ex-date 2024-01-03 (1-for-4 → factor 0.8) sits here
-    { ticker: 'DEMO', date: '2024-01-03', close: 80, volume: 1000 },
-    { ticker: 'DEMO', date: '2024-01-04', close: 80, volume: 1000 },
+    row('2024-01-03', 80),
+    row('2024-01-04', 80),
   ];
   const actions: CorporateAction[] = [
     { ticker: 'DEMO', exDate: '2024-01-03', type: 'bonus', terms: { newShares: 1, perHeld: 4 } },
@@ -99,6 +108,21 @@ describe('buildAdjustedSeries (back-adjustment)', () => {
       '2024-01-03',
       '2024-01-04',
     ]);
+  });
+
+  it('back-adjusts open/high/low by the same factor as close', () => {
+    const ohlc: RawPricePoint[] = [
+      { ticker: 'D', date: '2024-01-01', open: 90, high: 110, low: 85, close: 100, volume: 1 },
+      { ticker: 'D', date: '2024-01-03', open: 72, high: 88, low: 68, close: 80, volume: 1 },
+    ];
+    // bonus ex 2024-01-02, 1-for-4 → factor 0.8 applies to the pre-ex day only.
+    const s = buildAdjustedSeries(ohlc, [
+      { ticker: 'D', exDate: '2024-01-02', type: 'bonus', terms: { newShares: 1, perHeld: 4 } },
+    ]);
+    const d0 = s.points[0]!;
+    expect([d0.adjOpen, d0.adjHigh, d0.adjLow, d0.adjClose]).toEqual([72, 88, 68, 80]);
+    const d1 = s.points[1]!; // post-ex: factor 1
+    expect([d1.adjOpen, d1.adjHigh, d1.adjLow, d1.adjClose]).toEqual([72, 88, 68, 80]);
   });
 
   it('compounds multiple actions multiplicatively', () => {

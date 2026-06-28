@@ -19,9 +19,22 @@ describe('mapCompany', () => {
 });
 
 describe('mapPrice', () => {
-  it('normalizes datetime to ISO date and parses numbers', () => {
+  it('normalizes datetime to ISO date and parses numbers; OHLC defaults to close', () => {
     const p = mapPrice('GTCO', { date: '2024-12-31T16:00:00Z', close: '46.20', volume: '1,234' });
-    expect(p).toEqual({ ticker: 'GTCO', date: '2024-12-31', close: 46.2, volume: 1234 });
+    expect(p).toEqual({
+      ticker: 'GTCO',
+      date: '2024-12-31',
+      open: 46.2,
+      high: 46.2,
+      low: 46.2,
+      close: 46.2,
+      volume: 1234,
+    });
+  });
+
+  it('maps explicit OHLC fields', () => {
+    const p = mapPrice('X', { date: '2024-01-01', open: 9, high: 11, low: 8, close: 10, volume: 1 });
+    expect([p.open, p.high, p.low, p.close]).toEqual([9, 11, 8, 10]);
   });
   it('produces a row the clean layer accepts/rejects correctly', () => {
     const good = mapPrice('X', { date: '2024-01-01', close: 10, volume: 100 });

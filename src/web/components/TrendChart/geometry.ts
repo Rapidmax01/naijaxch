@@ -22,6 +22,17 @@ export interface OverlayPath {
   d: string;
 }
 
+/** A single candlestick in pixel space. */
+export interface Candle {
+  x: number;
+  halfWidth: number;
+  openY: number;
+  closeY: number;
+  highY: number;
+  lowY: number;
+  up: boolean;
+}
+
 export interface ChartGeometry {
   /** SVG path `d` for the line. */
   line: string;
@@ -33,6 +44,8 @@ export interface ChartGeometry {
   baselineY: number;
   /** SVG paths for each overlay series (gaps where the value is null). */
   overlays: OverlayPath[];
+  /** Candlestick geometry (only when `candles` is requested). */
+  candles: Candle[];
   min: number;
   max: number;
 }
@@ -52,6 +65,7 @@ export function buildGeometry(
   points: PricePoint[],
   dims: ChartDims,
   overlays: OverlayInput[] = [],
+  candles = false,
 ): ChartGeometry {
   const pad = dims.padding ?? 8;
   const w = dims.width;
@@ -60,11 +74,25 @@ export function buildGeometry(
   const innerH = Math.max(1, h - pad * 2);
 
   if (points.length === 0) {
-    return { line: '', area: '', coords: [], baselineY: h / 2, overlays: [], min: 0, max: 0 };
+    return {
+      line: '',
+      area: '',
+      coords: [],
+      baselineY: h / 2,
+      overlays: [],
+      candles: [],
+      min: 0,
+      max: 0,
+    };
   }
 
-  // Domain spans the close line and every non-null overlay value.
-  const domainValues = points.map((p) => p.adjClose);
+  // Domain spans the plotted price (close, or high/low when showing candles)
+  // plus every non-null overlay value, so nothing is clipped.
+  const domainValues: number[] = [];
+  for (const p of points) {
+    if (candles) domainValues.push(p.adjHigh, p.adjLow);
+    else domainValues.push(p.adjClose);
+  }
   for (const o of overlays) {
     for (const v of o.values) if (v != null) domainValues.push(v);
   }
@@ -105,7 +133,22 @@ export function buildGeometry(
     return { key: o.key, d };
   });
 
-  return { line, area, coords, baselineY, overlays: overlayPaths, min, max };
+  const candleGeom: Candle[] = candles
+    ? points.map((p, i) => {
+        const step = points.length > 1 ? innerW / (points.length - 1) : innerW;
+        return {
+          x: xAt(i),
+          halfWidth: Math.max(0.6, Math.min(6, (step * 0.6) / 2)),
+          openY: yAt(p.adjOpen),
+          closeY: yAt(p.adjClose),
+          highY: yAt(p.adjHigh),
+          lowY: yAt(p.adjLow),
+          up: p.adjClose >= p.adjOpen,
+        };
+      })
+    : [];
+
+  return { line, area, coords, baselineY, overlays: overlayPaths, candles: candleGeom, min, max };
 }
 
 /** Index of the coordinate nearest a pointer x (for scrub snapping). */

@@ -145,12 +145,33 @@ function syntheticCloses(base: number, amplitude: number, drift: number): number
 }
 
 function buildRaw(ticker: Ticker, closes: number[]): RawPricePoint[] {
-  return DAYS.map((date, i) => ({
-    ticker,
-    date,
-    close: closes[i]!,
-    volume: 25_000 + ((hash(ticker) + i * 37) % 250_000),
-  }));
+  const h = hash(ticker);
+  return DAYS.map((date, i) => {
+    const close = closes[i]!;
+    const prev = closes[i - 1] ?? close;
+    // Synthetic OHLC: open sits between yesterday's and today's close; the day's
+    // high/low bracket the open/close by a small deterministic range.
+    const open = round2((prev + close) / 2);
+    const hi = round2(Math.max(open, close) * (1 + ((h + i * 7) % 9) / 400)); // up to +2%
+    const lo = round2(Math.min(open, close) * (1 - ((h + i * 13) % 9) / 400)); // down to -2%
+    return {
+      ticker,
+      date,
+      open,
+      high: hi,
+      low: Math.max(0.01, lo),
+      close,
+      volume: 25_000 + ((h + i * 37) % 250_000),
+    };
+  });
+}
+
+/** Scale every price field of a row by a corporate-action factor. */
+function scaleRow(p: RawPricePoint, factor: number): void {
+  p.open = round2(p.open * factor);
+  p.high = round2(p.high * factor);
+  p.low = round2(p.low * factor);
+  p.close = round2(p.close * factor);
 }
 
 export const SAMPLE_RAW_PRICES: Record<Ticker, RawPricePoint[]> = {};
@@ -223,7 +244,7 @@ function applyBonusOrSplit(
 ): CorporateAction {
   const factor = perHeld / (perHeld + newShares);
   for (const p of SAMPLE_RAW_PRICES[ticker]!) {
-    if (p.date >= exDate) p.close = round2(p.close * factor);
+    if (p.date >= exDate) scaleRow(p, factor);
   }
   return { ticker, exDate, type, terms: { newShares, perHeld } };
 }
@@ -241,7 +262,7 @@ function applyRights(
   const subscriptionPrice = round2(cumPrice * subPriceFactor);
   const terp = (perHeld * cumPrice + newShares * subscriptionPrice) / (perHeld + newShares);
   const factor = terp / cumPrice;
-  for (let i = idx; i < series.length; i++) series[i]!.close = round2(series[i]!.close * factor);
+  for (let i = idx; i < series.length; i++) scaleRow(series[i]!, factor);
   return { ticker, exDate, type: 'rights', terms: { newShares, perHeld, subscriptionPrice, cumPrice } };
 }
 

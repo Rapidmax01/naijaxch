@@ -50,6 +50,9 @@ export class PrismaSourceOfTruth implements SourceOfTruth {
     return rows.map((r) => ({
       ticker: r.ticker,
       date: isoDate(r.date),
+      open: r.open.toNumber(),
+      high: r.high.toNumber(),
+      low: r.low.toNumber(),
       close: r.close.toNumber(),
       volume: Number(r.volume),
     }));

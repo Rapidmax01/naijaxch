@@ -1,4 +1,5 @@
 import { dataStore } from '@/data';
+import { sectorColor } from '@/web/lib/sectors';
 
 export default async function HomePage() {
   const companies = await dataStore.listCompanies();
@@ -35,9 +36,16 @@ export default async function HomePage() {
       <ul className="home__companies">
         {companies.map((c) => (
           <li key={c.ticker}>
-            <a href={`/stocks/${c.ticker}`} className="mkt">
+            <a
+              href={`/stocks/${c.ticker}`}
+              className="mkt"
+              style={{ ['--sector' as string]: sectorColor(c.sector) }}
+            >
               <span className="mkt__row">
-                <strong className="mkt__ticker">{c.ticker}</strong>
+                <span className="mkt__id">
+                  <span className="dot" aria-hidden />
+                  <strong className="mkt__ticker">{c.ticker}</strong>
+                </span>
                 <span className="mkt__sector">{c.sector}</span>
               </span>
               <span className="mkt__name">{c.name}</span>

@@ -8,6 +8,7 @@
 
 import { useMemo, useState } from 'react';
 import { formatNaira, formatPct } from '@/series';
+import { sectorColor } from '@/web/lib/sectors';
 import { applyScreener } from './filter';
 import {
   DEFAULT_FILTER,
@@ -142,9 +143,16 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
               {COLUMNS.map((col) => (
                 <td key={col.key} className={col.numeric ? 'is-numeric' : ''}>
                   {col.key === 'ticker' ? (
-                    <a href={`/stocks/${row.ticker}`}>
-                      <strong>{row.ticker}</strong>
-                      <span className="screener__name">{row.name}</span>
+                    <a
+                      href={`/stocks/${row.ticker}`}
+                      className="screener__stock"
+                      style={{ ['--sector' as string]: sectorColor(row.sector) }}
+                    >
+                      <span className="dot" aria-hidden />
+                      <span className="screener__id">
+                        <strong>{row.ticker}</strong>
+                        <span className="screener__name">{row.name}</span>
+                      </span>
                     </a>
                   ) : (
                     cell(col.key, row)

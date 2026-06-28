@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { Company, CorporateAction, Fundamentals, RawPricePoint } from '@/data/types';
+import {
+  SAMPLE_COMPANIES,
+  SAMPLE_CORPORATE_ACTIONS,
+  SAMPLE_RAW_PRICES,
+} from '@/data/fixtures/sample-stocks';
 import { FixtureMarketDataSource } from './sources/fixture-source';
 import { runIngestion } from './jobs';
 import type { MarketDataWriter } from './writer';
+
+// Expected counts derived from the fixture, so this stays correct as it grows.
+const EXPECTED_COMPANIES = SAMPLE_COMPANIES.length;
+const EXPECTED_PRICES = Object.values(SAMPLE_RAW_PRICES).reduce((n, p) => n + p.length, 0);
+const EXPECTED_ACTIONS = Object.values(SAMPLE_CORPORATE_ACTIONS).reduce((n, a) => n + a.length, 0);
 
 /** In-memory writer capturing what would be persisted. */
 class FakeWriter implements MarketDataWriter {
@@ -34,15 +44,15 @@ describe('runIngestion (fixture source → fake writer)', () => {
     const writer = new FakeWriter();
     const summary = await runIngestion(new FixtureMarketDataSource(), writer);
 
-    // 3 sample companies, 260 trading days each, 1 bonus action, 1 fundamentals/co.
-    expect(summary.companies).toBe(3);
-    expect(summary.rawPrices).toBe(3 * 260);
-    expect(summary.corporateActions).toBe(1);
-    expect(summary.fundamentals).toBe(3);
+    // Every fixture company, its daily series, actions, and one fundamentals/co.
+    expect(summary.companies).toBe(EXPECTED_COMPANIES);
+    expect(summary.rawPrices).toBe(EXPECTED_PRICES);
+    expect(summary.corporateActions).toBe(EXPECTED_ACTIONS);
+    expect(summary.fundamentals).toBe(EXPECTED_COMPANIES);
 
     // Writer actually received the data.
-    expect(writer.companies).toHaveLength(3);
-    expect(writer.prices).toHaveLength(780);
+    expect(writer.companies).toHaveLength(EXPECTED_COMPANIES);
+    expect(writer.prices).toHaveLength(EXPECTED_PRICES);
   });
 
   it('is idempotent in counts when run twice against a fresh writer', async () => {

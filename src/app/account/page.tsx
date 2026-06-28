@@ -1,11 +1,23 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { getPrismaClient } from '@/data/prisma-store';
+import { AccountActions } from '@/web/components/auth/AccountActions';
 
 export const metadata = { title: 'Account — NaijaXch' };
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user) redirect('/login');
+  if (!session?.user?.id) redirect('/login');
+
+  // emailVerified isn't in the JWT; read it from the source of truth.
+  let emailVerified = true;
+  if (process.env.DATABASE_URL) {
+    const user = await getPrismaClient().user.findUnique({
+      where: { id: session.user.id },
+      select: { emailVerified: true },
+    });
+    emailVerified = Boolean(user?.emailVerified);
+  }
 
   return (
     <div className="account-page">
@@ -20,10 +32,8 @@ export default async function AccountPage() {
           <dd className="account-page__tier">{session.user.tier === 'premium' ? 'Premium' : 'Free'}</dd>
         </div>
       </dl>
-      <p className="stock-page__sector">
-        Password reset, account deletion, and account-bound watchlist/portfolio are coming next
-        (Step 3b / 4).
-      </p>
+
+      <AccountActions emailVerified={emailVerified} />
     </div>
   );
 }

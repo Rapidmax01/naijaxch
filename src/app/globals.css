@@ -162,6 +162,51 @@ body {
 .account-page__tier {
   text-transform: capitalize;
 }
+.authform__note {
+  margin: 1rem 0;
+  color: var(--ink);
+  font-size: 0.9375rem;
+}
+
+/* --- Account actions --- */
+.account-actions {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+.account-actions__banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.5rem;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+.account-actions__muted {
+  color: var(--muted);
+}
+.account-actions__danger {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.account-actions__delete {
+  background: #fff;
+  border: 1px solid var(--down);
+  color: var(--down);
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 .site-main {
   max-width: 880px;
   margin: 0 auto;

@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { getPrismaClient } from '@/data/prisma-store';
 import { hashPassword } from '@/auth/password';
 import { isValidEmail, normalizeEmail, passwordIssues } from '@/auth/validation';
-import { sendEmail, verificationEmail } from '@/auth/email';
+import { createAndSendVerification } from '@/auth/verification';
 
 interface Body {
   email?: unknown;
@@ -47,13 +47,11 @@ export async function POST(request: Request) {
   const passwordHash = await hashPassword(password);
   await db.user.create({ data: { email, passwordHash, name } });
 
-  // Best-effort verification email (Step 3b enforces verification).
+  // Best-effort verification email; never fail signup on transport issues.
   try {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
-    const { subject, html } = verificationEmail(`${base}/login`);
-    await sendEmail({ to: email, subject, html });
+    await createAndSendVerification(email);
   } catch {
-    // Never fail signup on email transport issues; don't log PII.
+    // swallow — don't log PII
   }
 
   return NextResponse.json({ ok: true });

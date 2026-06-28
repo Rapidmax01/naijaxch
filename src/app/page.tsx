@@ -5,26 +5,39 @@ export default async function HomePage() {
 
   return (
     <div className="home">
-      <h1 className="home__title">Make NGX trend analysis fluid.</h1>
-      <p className="home__lede">
-        Robinhood-grade interactive charts for Nigerian stocks — built on a clean,
-        corporate-action-adjusted, end-of-day price series. Tap a timeframe, drag to read any point.
-      </p>
+      <section className="home__hero">
+        <span className="eyebrow">NGX · delayed / end-of-day</span>
+        <h1 className="home__title">
+          Make NGX trend analysis <em>fluid.</em>
+        </h1>
+        <p className="home__lede">
+          Robinhood-grade interactive charts for Nigerian stocks — built on a clean,
+          corporate-action-adjusted, end-of-day price series. Tap a timeframe, drag to read any
+          point.
+        </p>
+        <div className="home__cta">
+          <a className="btn btn--primary" href="/screener">
+            Screen NGX stocks →
+          </a>
+          <a className="btn btn--ghost" href="/heatmap">
+            Market heatmap
+          </a>
+          <a className="btn btn--ghost" href="/pricing">
+            Pricing
+          </a>
+        </div>
+      </section>
 
-      <p className="home__cta">
-        <a href="/screener">Screen NGX stocks →</a>
-        <a href="/heatmap">Market heatmap →</a>
-        <a href="/watchlist">My watchlist →</a>
-        <a href="/portfolio">View a portfolio-level trend →</a>
-        <a href="/pricing">Pricing →</a>
-      </p>
-
-      <h2 className="home__subtitle">Sample companies</h2>
+      <div className="home__section-head">
+        <h2 className="home__subtitle">Markets</h2>
+        <span className="pill">{companies.length} NGX names</span>
+      </div>
       <ul className="home__companies">
         {companies.map((c) => (
           <li key={c.ticker}>
             <a href={`/stocks/${c.ticker}`}>
-              <strong>{c.ticker}</strong> — {c.name}
+              <strong>{c.ticker}</strong>
+              <span>{c.name}</span>
               <span className="home__sector">{c.sector}</span>
             </a>
           </li>

@@ -2,6 +2,9 @@ import { getScreenerRows } from '@/api';
 import { Heatmap } from '@/web/components/heatmap/Heatmap';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
+// Reads the source of truth at request time — don't prerender against the DB.
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Market heatmap — NaijaXch',
 };

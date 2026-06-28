@@ -27,16 +27,23 @@ import { buildGeometry, nearestIndex } from './geometry';
 const VIEW_W = 720;
 const VIEW_H = 240;
 
+/** Timeframes gated behind Premium (full trend history — spec §7). */
+const PREMIUM_TIMEFRAMES: Timeframe[] = ['5Y', 'MAX'];
+
 export interface TrendChartProps {
   series: PriceSeries;
   /** Display label (e.g. company name or "Portfolio"). */
   label: string;
+  /** When false, 5Y/Max are shown as a blurred teaser with an upgrade CTA. */
+  premium?: boolean;
 }
 
-export function TrendChart({ series, label }: TrendChartProps) {
+export function TrendChart({ series, label, premium = true }: TrendChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const locked = !premium && PREMIUM_TIMEFRAMES.includes(timeframe);
 
   const windowed = useMemo(() => windowSeries(series, timeframe), [series, timeframe]);
   const geometry = useMemo(
@@ -65,6 +72,7 @@ export function TrendChart({ series, label }: TrendChartProps) {
   }
 
   function handleMove(clientX: number) {
+    if (locked) return; // no scrub on the teaser
     const i = pointerToIndex(clientX);
     if (i >= 0) setScrubIndex(i);
   }
@@ -91,9 +99,10 @@ export function TrendChart({ series, label }: TrendChartProps) {
         )}
       </header>
 
+      <div className="trendchart__plot">
       <svg
         ref={svgRef}
-        className="trendchart__svg"
+        className={`trendchart__svg${locked ? ' is-locked' : ''}`}
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         preserveAspectRatio="none"
         role="img"

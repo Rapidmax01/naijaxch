@@ -1,9 +1,13 @@
 # Proposal 0001 — Persistence, Auth & Billing
 
-**Status:** Draft for review (no code written, no migrations run)
+**Status:** Approved direction; Step 1 (DB foundation) scaffolded — migrations not yet run
 **Author:** Claude + Obinna
 **Date:** 2026-06-27
 **Approval required before building:** DB schema/migrations · auth · billing (CLAUDE.md "Human approval required" #2, #3).
+
+**Decisions taken:** D1 Prisma (v6, classic config) · D2 (auth) deferred to its step · D3 compute-on-read + cache · D4 Paystack · D5 start with DB swap only.
+
+**Step 1 done (scaffold only):** Prisma schema for market-data tables, hypertable SQL, `PrismaSourceOfTruth` behind the existing interface, seed script, local `docker-compose`. The store falls back to the in-memory fixtures when `DATABASE_URL` is unset, so nothing is user-visibly changed until you run the (human-run) migrations. Follow-up when DB-backed: data-reading pages may need `force-dynamic`/revalidate since they currently prerender from fixtures at build.
 
 ---
 

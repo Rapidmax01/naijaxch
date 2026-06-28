@@ -1,0 +1,25 @@
+# Local development database: Postgres + TimescaleDB.
+# Not for production. Brings up the source-of-truth DB so the DB-backed store
+# can be exercised locally. Credentials here are throwaway dev values (G5 — real
+# secrets live in .env.local / the deploy environment, never committed).
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: naijaxch-db
+    environment:
+      POSTGRES_USER: naijaxch
+      POSTGRES_PASSWORD: naijaxch_dev
+      POSTGRES_DB: naijaxch
+    ports:
+      - '5432:5432'
+    volumes:
+      - naijaxch_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U naijaxch -d naijaxch']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  naijaxch_pgdata:

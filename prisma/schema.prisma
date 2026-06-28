@@ -1,0 +1,69 @@
+// NaijaXch — source-of-truth schema (Step 1: market data only).
+// Postgres + TimescaleDB. The raw_prices table is converted to a TimescaleDB
+// hypertable by a raw-SQL migration (see prisma/sql/timescale.sql) — Prisma
+// models it as an ordinary table.
+//
+// GUARDRAIL: schema changes / migrations require human approval (CLAUDE.md #2).
+// Money/quantities are NUMERIC (never float) to match the decimal.js rule.
+// Auth/billing models are intentionally NOT here yet — they are a later, gated
+// step (see docs/proposals/0001-persistence-auth-billing.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  ticker            String            @id
+  name              String
+  sector            String
+  sharesOutstanding Decimal?          @map("shares_outstanding") @db.Decimal(20, 0)
+  rawPrices         RawPrice[]
+  corporateActions  CorporateAction[]
+  fundamentals      Fundamentals[]
+
+  @@map("companies")
+}
+
+model RawPrice {
+  ticker  String
+  date    DateTime @db.Date
+  close   Decimal  @db.Decimal(18, 4) // unadjusted close (audit) — never plotted
+  volume  BigInt
+  company Company  @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+
+  // PK includes `date` so it satisfies TimescaleDB's hypertable constraint.
+  @@id([ticker, date])
+  @@map("raw_prices")
+}
+
+model CorporateAction {
+  id      String   @id @default(uuid())
+  ticker  String
+  exDate  DateTime @map("ex_date") @db.Date
+  type    String // 'bonus' | 'split' | 'rights'
+  terms   Json // BonusOrSplitTerms | RightsTerms
+  company Company  @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+
+  @@index([ticker, exDate])
+  @@map("corporate_actions")
+}
+
+model Fundamentals {
+  ticker           String
+  period           String
+  revenue          Decimal @db.Decimal(20, 2)
+  netIncome        Decimal @map("net_income") @db.Decimal(20, 2)
+  shareCount       Decimal @map("share_count") @db.Decimal(20, 0)
+  dividendPerShare Decimal @map("dividend_per_share") @db.Decimal(18, 4)
+  totalEquity      Decimal @map("total_equity") @db.Decimal(20, 2)
+  totalDebt        Decimal @map("total_debt") @db.Decimal(20, 2)
+  company          Company @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+
+  @@id([ticker, period])
+  @@map("fundamentals")
+}

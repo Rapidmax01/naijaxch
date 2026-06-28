@@ -18,11 +18,27 @@
 npm install
 cp .env.example .env.local   # fill in values; never commit real secrets
 npm run dev                  # http://localhost:3000
-npm test                     # run the trend-engine unit tests
+npm test                     # run the unit tests
 ```
 
 Open `/` for the sample company list, or `/stocks/GTCO` to see the fluid trend chart
 (GTCO carries a sample bonus issue, so raw vs. adjusted differ).
+
+### Database (optional in dev)
+
+The source of truth (`src/data`) uses an **in-memory fixture store when `DATABASE_URL`
+is unset**, so the app, tests, and CI run with no database. To use the real
+Postgres + TimescaleDB store, set `DATABASE_URL` and run:
+
+```bash
+npm run db:up         # start Postgres+TimescaleDB locally (Docker)
+npm run db:migrate    # apply Prisma migrations (creates the tables)   ⚠ human-run
+npm run db:timescale  # convert raw_prices to a TimescaleDB hypertable ⚠ human-run
+npm run db:seed       # load the sample data into the DB
+```
+
+> Migrations are a **human-approved/human-run** step (CLAUDE.md #2). The DB-backed
+> store is selected automatically once `DATABASE_URL` is present.
 
 ## Architecture (`src/`)
 

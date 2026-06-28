@@ -20,6 +20,7 @@ import {
   SAMPLE_RAW_PRICES,
   type SampleCompany,
 } from './fixtures/sample-stocks';
+import { PrismaSourceOfTruth } from './prisma-store';
 
 export interface SourceOfTruth {
   listCompanies(): Promise<SampleCompany[]>;
@@ -51,5 +52,16 @@ class InMemorySourceOfTruth implements SourceOfTruth {
   }
 }
 
-/** Process-wide source of truth. Swap for the DB-backed impl once migrations land. */
-export const dataStore: SourceOfTruth = new InMemorySourceOfTruth();
+/**
+ * Process-wide source of truth. Uses the Postgres/TimescaleDB-backed store when
+ * DATABASE_URL is set, otherwise the in-memory fixture store — so the app, tests,
+ * and CI run without a database. The Prisma client is only constructed when the
+ * DB path is actually selected (lazy in prisma-store).
+ */
+function selectStore(): SourceOfTruth {
+  // PrismaSourceOfTruth constructs its client lazily (first query only), so the
+  // fixture path never opens a DB connection even though the class is imported.
+  return process.env.DATABASE_URL ? new PrismaSourceOfTruth() : new InMemorySourceOfTruth();
+}
+
+export const dataStore: SourceOfTruth = selectStore();

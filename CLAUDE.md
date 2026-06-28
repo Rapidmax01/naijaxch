@@ -79,7 +79,7 @@ NEVER put API keys, tokens, DB credentials, or environment-specific values in co
 - Test: `npm test`  — **run before committing.**
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
-- DB migrations: Postgres/TimescaleDB **not yet wired** — `src/data/` ships an in-memory, fixture-backed store. Adding the DB + migrations **requires human approval (see below).**
+- DB migrations: Postgres/TimescaleDB scaffolded via **Prisma 6** (`prisma/schema.prisma`, market-data tables; hypertable in `prisma/sql/timescale.sql`). `src/data/` selects the Prisma store when `DATABASE_URL` is set, else an in-memory fixture store (so tests/CI run without a DB). **Running migrations is human-run/human-approved (see below).** Commands: `npm run db:up | db:migrate | db:timescale | db:seed`.
 
 > Next.js note: routing lives in `src/app/` (thin pages + `src/app/api/.../route.ts` handlers that delegate to `src/api/`). Reusable UI — including the trend chart — lives in `src/web/`. Handlers and components hold no data/business logic (layering rule).
 

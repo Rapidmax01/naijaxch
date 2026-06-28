@@ -11,6 +11,17 @@ export interface Pt {
   y: number;
 }
 
+/** A named overlay series (e.g. a moving average) aligned to the points. */
+export interface OverlayInput {
+  key: string;
+  values: (number | null)[];
+}
+
+export interface OverlayPath {
+  key: string;
+  d: string;
+}
+
 export interface ChartGeometry {
   /** SVG path `d` for the line. */
   line: string;
@@ -20,6 +31,8 @@ export interface ChartGeometry {
   coords: Pt[];
   /** Pixel y for the reference line (window's first adjClose). */
   baselineY: number;
+  /** SVG paths for each overlay series (gaps where the value is null). */
+  overlays: OverlayPath[];
   min: number;
   max: number;
 }
@@ -31,8 +44,15 @@ export interface ChartDims {
   padding?: number;
 }
 
-/** Map adjClose values to SVG coordinates over [padding, dim-padding]. */
-export function buildGeometry(points: PricePoint[], dims: ChartDims): ChartGeometry {
+/**
+ * Map adjClose (and any overlay series) to SVG coordinates over a shared
+ * y-domain, so overlay lines align with the price line and aren't clipped.
+ */
+export function buildGeometry(
+  points: PricePoint[],
+  dims: ChartDims,
+  overlays: OverlayInput[] = [],
+): ChartGeometry {
   const pad = dims.padding ?? 8;
   const w = dims.width;
   const h = dims.height;
@@ -40,12 +60,16 @@ export function buildGeometry(points: PricePoint[], dims: ChartDims): ChartGeome
   const innerH = Math.max(1, h - pad * 2);
 
   if (points.length === 0) {
-    return { line: '', area: '', coords: [], baselineY: h / 2, min: 0, max: 0 };
+    return { line: '', area: '', coords: [], baselineY: h / 2, overlays: [], min: 0, max: 0 };
   }
 
-  const values = points.map((p) => p.adjClose);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  // Domain spans the close line and every non-null overlay value.
+  const domainValues = points.map((p) => p.adjClose);
+  for (const o of overlays) {
+    for (const v of o.values) if (v != null) domainValues.push(v);
+  }
+  const min = Math.min(...domainValues);
+  const max = Math.max(...domainValues);
   const span = max - min || 1; // avoid /0 on a flat series
 
   const xAt = (i: number) =>
@@ -66,7 +90,22 @@ export function buildGeometry(points: PricePoint[], dims: ChartDims): ChartGeome
 
   const baselineY = yAt(points[0]!.adjClose);
 
-  return { line, area, coords, baselineY, min, max };
+  const overlayPaths: OverlayPath[] = overlays.map((o) => {
+    let d = '';
+    let move = true;
+    o.values.forEach((v, i) => {
+      if (v == null) {
+        move = true;
+        return;
+      }
+      const cmd = move ? 'M' : 'L';
+      d += `${d ? ' ' : ''}${cmd}${xAt(i).toFixed(2)},${yAt(v).toFixed(2)}`;
+      move = false;
+    });
+    return { key: o.key, d };
+  });
+
+  return { line, area, coords, baselineY, overlays: overlayPaths, min, max };
 }
 
 /** Index of the coordinate nearest a pointer x (for scrub snapping). */

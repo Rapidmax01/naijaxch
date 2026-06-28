@@ -18,6 +18,7 @@ import {
   formatDate,
   formatNaira,
   formatPct,
+  sma,
   windowSeries,
   windowStats,
   type Timeframe,
@@ -30,6 +31,15 @@ const VIEW_H = 240;
 /** Timeframes gated behind Premium (full trend history — spec §7). */
 const PREMIUM_TIMEFRAMES: Timeframe[] = ['5Y', 'MAX'];
 
+/** Moving-average overlays (computed deterministically from adjClose — G1). */
+const MOVING_AVERAGES = [
+  { key: 'ma50', label: 'MA 50', period: 50, color: 'var(--gold)' },
+  { key: 'ma200', label: 'MA 200', period: 200, color: '#3b5bdb' },
+] as const;
+const MA_COLOR: Record<string, string> = Object.fromEntries(
+  MOVING_AVERAGES.map((m) => [m.key, m.color]),
+);
+
 export interface TrendChartProps {
   series: PriceSeries;
   /** Display label (e.g. company name or "Portfolio"). */
@@ -41,14 +51,35 @@ export interface TrendChartProps {
 export function TrendChart({ series, label, premium = true }: TrendChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
+  const [activeMAs, setActiveMAs] = useState<Set<string>>(() => new Set(['ma50']));
   const svgRef = useRef<SVGSVGElement>(null);
 
   const locked = !premium && PREMIUM_TIMEFRAMES.includes(timeframe);
 
   const windowed = useMemo(() => windowSeries(series, timeframe), [series, timeframe]);
+
+  // Moving averages are computed over the FULL series (so trailing values are
+  // correct), then sliced to the visible window.
+  const maByKey = useMemo(() => {
+    const closes = series.points.map((p) => p.adjClose);
+    const wlen = windowed.points.length;
+    const out: Record<string, (number | null)[]> = {};
+    for (const ma of MOVING_AVERAGES) out[ma.key] = sma(closes, ma.period).slice(-wlen);
+    return out;
+  }, [series, windowed.points.length]);
+
+  const overlays = useMemo(
+    () =>
+      MOVING_AVERAGES.filter((ma) => activeMAs.has(ma.key)).map((ma) => ({
+        key: ma.key,
+        values: maByKey[ma.key]!,
+      })),
+    [activeMAs, maByKey],
+  );
+
   const geometry = useMemo(
-    () => buildGeometry(windowed.points, { width: VIEW_W, height: VIEW_H, padding: 12 }),
-    [windowed],
+    () => buildGeometry(windowed.points, { width: VIEW_W, height: VIEW_H, padding: 12 }, overlays),
+    [windowed, overlays],
   );
   const stats = useMemo(
     () => windowStats(windowed, scrubIndex ?? undefined),
@@ -141,6 +172,19 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
           strokeLinecap="round"
         />
 
+        {geometry.overlays.map((o) => (
+          <path
+            key={o.key}
+            d={o.d}
+            fill="none"
+            stroke={MA_COLOR[o.key]}
+            strokeWidth={1.4}
+            strokeOpacity={0.95}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        ))}
+
         {cursor && (
           <g className="trendchart__crosshair">
             <line x1={cursor.x} x2={cursor.x} y1={0} y2={VIEW_H} stroke={color} strokeOpacity={0.4} />
@@ -158,21 +202,49 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
         )}
       </div>
 
-      <div className="trendchart__timeframes" role="group" aria-label="Timeframe">
-        {TIMEFRAMES.map((tf) => (
-          <button
-            key={tf}
-            type="button"
-            className={`trendchart__tf${tf === timeframe ? ' is-active' : ''}`}
-            aria-pressed={tf === timeframe}
-            onClick={() => {
-              setTimeframe(tf);
-              setScrubIndex(null);
-            }}
-          >
-            {tf}
-          </button>
-        ))}
+      <div className="trendchart__controls">
+        <div className="trendchart__timeframes" role="group" aria-label="Timeframe">
+          {TIMEFRAMES.map((tf) => (
+            <button
+              key={tf}
+              type="button"
+              className={`trendchart__tf${tf === timeframe ? ' is-active' : ''}`}
+              aria-pressed={tf === timeframe}
+              onClick={() => {
+                setTimeframe(tf);
+                setScrubIndex(null);
+              }}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+
+        <div className="trendchart__indicators" role="group" aria-label="Moving averages">
+          {MOVING_AVERAGES.map((ma) => {
+            const on = activeMAs.has(ma.key);
+            return (
+              <button
+                key={ma.key}
+                type="button"
+                className={`trendchart__ind${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                style={{ ['--ma' as string]: ma.color }}
+                onClick={() =>
+                  setActiveMAs((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(ma.key)) next.delete(ma.key);
+                    else next.add(ma.key);
+                    return next;
+                  })
+                }
+              >
+                <span className="trendchart__ind-dot" aria-hidden />
+                {ma.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Screen-reader summary (accessibility, spec §5.4). */}

@@ -5,6 +5,7 @@
  */
 
 import { formatPct } from '@/series';
+import { sectorColor } from '@/web/lib/sectors';
 import type { ScreenerRow } from '../screener/types';
 import { changeColor, computePulse } from './pulse';
 
@@ -51,7 +52,10 @@ export function Heatmap({ rows }: { rows: ScreenerRow[] }) {
 
       {sectors.map(([sector, sectorRows]) => (
         <section key={sector} className="heatmap__sector">
-          <h2 className="heatmap__sector-title">{sector}</h2>
+          <h2 className="heatmap__sector-title">
+            <span className="dot" style={{ ['--sector' as string]: sectorColor(sector) }} aria-hidden />
+            {sector}
+          </h2>
           <div className="heatmap__grid">
             {sectorRows.map((r) => (
               <a

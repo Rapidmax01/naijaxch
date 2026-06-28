@@ -9,6 +9,7 @@ import { WatchButton } from '@/web/components/watchlist/WatchButton';
 import { UpgradePrompt } from '@/web/components/billing/UpgradePrompt';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 import { isPremium } from '@/billing';
+import { sectorColor, sectorWash } from '@/web/lib/sectors';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
@@ -34,7 +35,18 @@ export default async function StockPage({ params }: { params: { ticker: string }
           <h1 className="stock-page__title">
             {company.name} <span className="stock-page__ticker">{company.ticker}</span>
           </h1>
-          <p className="stock-page__sector">{company.sector}</p>
+          <p className="stock-page__sector">
+            <span
+              className="sector-chip"
+              style={{
+                ['--sector' as string]: sectorColor(company.sector),
+                background: sectorWash(company.sector),
+              }}
+            >
+              <span className="dot" aria-hidden />
+              {company.sector}
+            </span>
+          </p>
         </div>
         <WatchButton ticker={company.ticker} />
       </div>

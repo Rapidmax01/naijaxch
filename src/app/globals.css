@@ -1370,6 +1370,60 @@ button {
   font-size: 0.8rem;
 }
 
+/* ============================================================ Sector colour */
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--sector, var(--faint));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sector, var(--faint)) 16%, transparent);
+}
+.mkt__id {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mkt__sector {
+  color: var(--sector, var(--faint));
+  font-weight: 600;
+}
+.sector-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--sector, var(--muted));
+}
+.screener__stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.screener__id {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+/* Richer, multi-hue hero wash */
+.home__hero {
+  position: relative;
+}
+.home__hero::before {
+  content: '';
+  position: absolute;
+  inset: -2rem -3rem 0 -3rem;
+  z-index: -1;
+  background:
+    radial-gradient(420px 220px at 8% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    radial-gradient(460px 240px at 78% -20%, color-mix(in srgb, #3b5bdb 14%, transparent), transparent 72%),
+    radial-gradient(520px 280px at 100% 30%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
 @media (max-width: 720px) {
   .site-nav {
     display: none;

@@ -502,6 +502,27 @@ button {
   margin-top: 0.25rem;
   overflow: visible;
 }
+.trendchart__osc {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+.trendchart__osc-cap {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+}
+.trendchart__osc-cap strong {
+  color: var(--ink);
+}
+.trendchart__osc-svg {
+  width: 100%;
+  height: 96px;
+  margin-top: 0.25rem;
+  color: var(--faint);
+  overflow: visible;
+}
 .trendchart__plot {
   position: relative;
 }
@@ -555,7 +576,8 @@ button {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-.trendchart__types {
+.trendchart__types,
+.trendchart__osc-sel {
   display: inline-flex;
   gap: 0.15rem;
   background: var(--paper-2);

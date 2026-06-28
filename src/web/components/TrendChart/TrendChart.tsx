@@ -21,16 +21,26 @@ import {
   formatDate,
   formatNaira,
   formatPct,
+  macd,
+  rsi,
   sma,
   windowSeries,
   windowStats,
   type Timeframe,
 } from '@/series';
-import { buildGeometry, buildVolumeBars, nearestIndex } from './geometry';
+import { buildGeometry, buildOscillator, buildVolumeBars, nearestIndex } from './geometry';
 
 const VIEW_W = 720;
 const VIEW_H = 240;
 const VOL_H = 64;
+const OSC_H = 96;
+
+/** Oscillator sub-panel: a momentum study drawn below the price plot. */
+type Oscillator = 'off' | 'rsi' | 'macd';
+const RSI_PERIOD = 14;
+const RSI_COLOR = '#5f3dc4';
+const MACD_COLOR = '#1c7ed6';
+const MACD_SIGNAL_COLOR = '#e8590c';
 
 /** Timeframes gated behind Premium (full trend history — spec §7). */
 const PREMIUM_TIMEFRAMES: Timeframe[] = ['5Y', 'MAX'];
@@ -67,6 +77,7 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
   const [showBB, setShowBB] = useState(false);
   const [chartType, setChartType] = useState<ChartType>('line');
   const [showVolume, setShowVolume] = useState(false);
+  const [oscillator, setOscillator] = useState<Oscillator>('off');
   const svgRef = useRef<SVGSVGElement>(null);
 
   const showCandles = allowCandles && chartType === 'candles';
@@ -126,6 +137,37 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
     () => (showVol ? buildVolumeBars(windowed.points, { width: VIEW_W, height: VOL_H, padding: 12 }) : []),
     [showVol, windowed],
   );
+  // Oscillator (RSI or MACD) — computed over the full series (so the smoothing
+  // is warmed up), then sliced to the window. Deterministic math (G1 / TS4).
+  const osc = useMemo(() => {
+    if (oscillator === 'off') return null;
+    const closes = series.points.map((p) => p.adjClose);
+    if (oscillator === 'rsi') {
+      const values = rsi(closes, RSI_PERIOD).slice(-wlen);
+      const geom = buildOscillator(
+        { width: VIEW_W, height: OSC_H, padding: 12 },
+        { lines: [{ key: 'rsi', values }], domain: [0, 100], guides: [30, 50, 70] },
+      );
+      return { kind: 'rsi' as const, geom, rsi: values };
+    }
+    const m = macd(closes);
+    const macdLine = m.macd.slice(-wlen);
+    const signal = m.signal.slice(-wlen);
+    const histogram = m.histogram.slice(-wlen);
+    const geom = buildOscillator(
+      { width: VIEW_W, height: OSC_H, padding: 12 },
+      {
+        lines: [
+          { key: 'macd', values: macdLine },
+          { key: 'signal', values: signal },
+        ],
+        histogram,
+        guides: [0],
+      },
+    );
+    return { kind: 'macd' as const, geom, macd: macdLine, signal, histogram };
+  }, [oscillator, series, wlen]);
+
   const stats = useMemo(
     () => windowStats(windowed, scrubIndex ?? undefined),
     [windowed, scrubIndex],
@@ -324,6 +366,75 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
         </svg>
       )}
 
+      {osc && (
+        <div className="trendchart__osc">
+          <div className="trendchart__osc-cap">
+            {osc.kind === 'rsi' ? (
+              <span>
+                RSI ({RSI_PERIOD}){' '}
+                <strong>{osc.rsi[scrubIndex ?? wlen - 1] ?? '—'}</strong>
+              </span>
+            ) : (
+              <span>
+                MACD (12, 26, 9) <strong style={{ color: MACD_COLOR }}>{osc.macd[scrubIndex ?? wlen - 1] ?? '—'}</strong>{' '}
+                <span style={{ color: MACD_SIGNAL_COLOR }}>
+                  signal {osc.signal[scrubIndex ?? wlen - 1] ?? '—'}
+                </span>
+              </span>
+            )}
+          </div>
+          <svg
+            className="trendchart__osc-svg"
+            viewBox={`0 0 ${VIEW_W} ${OSC_H}`}
+            preserveAspectRatio="none"
+            role="img"
+            aria-label={osc.kind === 'rsi' ? 'Relative Strength Index' : 'MACD'}
+          >
+            {osc.geom.guides.map((g) => (
+              <g key={g.level}>
+                <line
+                  x1={0}
+                  x2={VIEW_W}
+                  y1={g.y}
+                  y2={g.y}
+                  stroke="currentColor"
+                  strokeOpacity={g.level === 0 ? 0.35 : 0.18}
+                  strokeDasharray={g.level === 0 ? undefined : '3 5'}
+                />
+              </g>
+            ))}
+            {osc.kind === 'macd' &&
+              osc.geom.bars.map((b, i) => (
+                <rect
+                  key={i}
+                  x={b.x - b.halfWidth}
+                  y={Math.min(b.zeroY, b.valueY)}
+                  width={b.halfWidth * 2}
+                  height={Math.max(0.5, Math.abs(b.zeroY - b.valueY))}
+                  fill={b.positive ? 'var(--up)' : 'var(--down)'}
+                  fillOpacity={0.45}
+                />
+              ))}
+            {osc.geom.lines.map((l) => (
+              <path
+                key={l.key}
+                d={l.d}
+                fill="none"
+                stroke={
+                  l.key === 'rsi' ? RSI_COLOR : l.key === 'signal' ? MACD_SIGNAL_COLOR : MACD_COLOR
+                }
+                strokeWidth={1.6}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            ))}
+            {cursor && (
+              <line x1={cursor.x} x2={cursor.x} y1={0} y2={OSC_H} stroke="var(--faint)" strokeOpacity={0.5} />
+            )}
+          </svg>
+        </div>
+      )}
+
       <div className="trendchart__controls">
         <div className="trendchart__timeframes" role="group" aria-label="Timeframe">
           {TIMEFRAMES.map((tf) => (
@@ -405,6 +516,19 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
               Vol
             </button>
           )}
+          <div className="trendchart__osc-sel" role="group" aria-label="Oscillator">
+            {(['off', 'rsi', 'macd'] as const).map((o) => (
+              <button
+                key={o}
+                type="button"
+                className={`trendchart__type${oscillator === o ? ' is-active' : ''}`}
+                aria-pressed={oscillator === o}
+                onClick={() => setOscillator(o)}
+              >
+                {o === 'off' ? 'No osc' : o.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

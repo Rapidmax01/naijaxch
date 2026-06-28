@@ -151,6 +151,34 @@ export function buildGeometry(
   return { line, area, coords, baselineY, overlays: overlayPaths, candles: candleGeom, min, max };
 }
 
+/** A single volume bar in pixel space (aligned to the price chart's x-scale). */
+export interface VolumeBar {
+  x: number;
+  halfWidth: number;
+  topY: number;
+  bottomY: number;
+  up: boolean;
+}
+
+/** Volume bars scaled to the panel height; coloured by the day's direction. */
+export function buildVolumeBars(points: PricePoint[], dims: ChartDims): VolumeBar[] {
+  if (points.length === 0) return [];
+  const pad = dims.padding ?? 8;
+  const innerW = Math.max(1, dims.width - pad * 2);
+  const innerH = Math.max(1, dims.height - pad * 2);
+  const maxVol = Math.max(1, ...points.map((p) => p.volume));
+  const baseY = dims.height - pad;
+  const xAt = (i: number) =>
+    points.length === 1 ? pad + innerW / 2 : pad + (i / (points.length - 1)) * innerW;
+  const step = points.length > 1 ? innerW / (points.length - 1) : innerW;
+  const halfWidth = Math.max(0.6, Math.min(6, (step * 0.6) / 2));
+
+  return points.map((p, i) => {
+    const h = (p.volume / maxVol) * innerH;
+    return { x: xAt(i), halfWidth, topY: baseY - h, bottomY: baseY, up: p.adjClose >= p.adjOpen };
+  });
+}
+
 /** Index of the coordinate nearest a pointer x (for scrub snapping). */
 export function nearestIndex(coords: Pt[], x: number): number {
   if (coords.length === 0) return -1;

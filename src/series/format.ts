@@ -23,6 +23,15 @@ export function formatPct(value: number): string {
   return `${sign}${d.toFixed(2)}%`;
 }
 
+/** Compact integer (volume), e.g. `250000` → `250K`, `1500000` → `1.5M`. */
+export function formatCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${Math.round(value / 1e3)}K`;
+  return String(Math.round(value));
+}
+
 /** Format an ISO date `YYYY-MM-DD` → `DD Mon YYYY` (e.g. `15 Mar 2024`). */
 export function formatDate(iso: string): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

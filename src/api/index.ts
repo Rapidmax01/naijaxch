@@ -8,3 +8,4 @@ export {
   mergeWatchlist,
   removeFromWatchlist,
 } from './watchlist';
+export { getHoldings, replaceHoldings, type AccountHolding } from './holdings';

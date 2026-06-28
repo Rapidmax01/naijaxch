@@ -82,9 +82,23 @@ model User {
   accounts      Account[]
   sessions      Session[]
   watchlist     WatchlistItem[]
+  holdings      Holding[]
   passwordResets PasswordResetToken[]
 
   @@map("users")
+}
+
+// Manual portfolio tracker — one holdings set per user (spec §7). Quantities are
+// NUMERIC (never float). Summed × adjClose into the portfolio trend (spec §5.5).
+model Holding {
+  userId    String   @map("user_id")
+  ticker    String
+  quantity  Decimal  @db.Decimal(20, 4)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, ticker])
+  @@map("holdings")
 }
 
 model Account {

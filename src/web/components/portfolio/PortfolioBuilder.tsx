@@ -3,13 +3,14 @@
 /**
  * PortfolioBuilder — manual holdings entry → portfolio-level trend (spec §5.5).
  *
- * Holdings are entered manually and kept in client state only (no auth/DB in
- * the Phase-1 scaffold; nothing is persisted or logged — G4). The portfolio
- * adjusted series is built server-side via /api/portfolio/series and rendered
- * with the same scrubbable TrendChart used for single stocks.
+ * Signed in: holdings load from and autosave to the account (holdings table).
+ * Signed out: client-only (nothing persisted/logged — G4) with a prompt to log
+ * in. The portfolio adjusted series is built server-side via
+ * /api/portfolio/series and rendered with the same scrubbable TrendChart.
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import type { PriceSeries } from '@/series/types';
 import type { SampleCompany } from '@/data';
 import { TrendChart } from '@/web/components/TrendChart';
@@ -20,14 +21,58 @@ interface HoldingRow {
 }
 
 export function PortfolioBuilder({ companies }: { companies: SampleCompany[] }) {
-  const [rows, setRows] = useState<HoldingRow[]>([
-    { ticker: companies[0]?.ticker ?? '', quantity: 100 },
-  ]);
+  const { status } = useSession();
+  const authed = status === 'authenticated';
+
+  const defaultRows: HoldingRow[] = [{ ticker: companies[0]?.ticker ?? '', quantity: 100 }];
+  const [rows, setRows] = useState<HoldingRow[]>(defaultRows);
   const [series, setSeries] = useState<PriceSeries | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const validRows = rows.filter((r) => r.ticker && r.quantity > 0);
   const holdingsKey = JSON.stringify(validRows);
+
+  // Load saved holdings from the account once authenticated.
+  useEffect(() => {
+    if (status === 'loading') return;
+    let cancelled = false;
+    async function load() {
+      if (authed) {
+        try {
+          const res = await fetch('/api/portfolio/holdings');
+          if (res.ok) {
+            const data = (await res.json()) as { holdings?: HoldingRow[] };
+            if (!cancelled && data.holdings && data.holdings.length > 0) setRows(data.holdings);
+          }
+        } catch {
+          // keep defaults
+        }
+      }
+      if (!cancelled) setLoaded(true);
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, authed]);
+
+  // Autosave holdings to the account (debounced) once loaded.
+  useEffect(() => {
+    if (!authed || !loaded) return;
+    setSaved(false);
+    const timer = setTimeout(() => {
+      fetch('/api/portfolio/holdings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ holdings: JSON.parse(holdingsKey) }),
+      })
+        .then(() => setSaved(true))
+        .catch(() => {});
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [holdingsKey, authed, loaded]);
 
   const fetchSeries = useCallback(async (holdings: HoldingRow[]) => {
     if (holdings.length === 0) {
@@ -128,9 +173,18 @@ export function PortfolioBuilder({ companies }: { companies: SampleCompany[] }) 
         </tbody>
       </table>
 
-      <button type="button" className="portfolio__add" onClick={addRow}>
-        + Add holding
-      </button>
+      <div className="portfolio__actions">
+        <button type="button" className="portfolio__add" onClick={addRow}>
+          + Add holding
+        </button>
+        {authed ? (
+          <span className="portfolio__save">{saved ? 'Saved to your account' : 'Saving…'}</span>
+        ) : (
+          <span className="portfolio__save">
+            <a href="/login">Log in</a> to save your portfolio
+          </span>
+        )}
+      </div>
 
       <div className="portfolio__chart" aria-busy={loading}>
         {series && series.points.length > 0 ? (

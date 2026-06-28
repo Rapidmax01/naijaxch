@@ -11,6 +11,12 @@
 
 **Step 2 done:** ingestion pipeline (`src/ingestion`) — `MarketDataSource` interface, `MarketDataWriter` interface + Prisma writer (idempotent upserts), pure validate/clean layer, `runIngestion()` orchestration, `npm run ingest`. Source is the **fixture source** (placeholder) until the licensed NGX delayed/EOD feed is wired; `NgxMarketDataSource` is a stub marking that gated seam (G3). Tested via a fake writer (no DB needed).
 
+**Step 3 done:** auth — see proposal 0002 (all sub-steps complete, verified on live DB).
+
+**Step 4 done:** account-bound portfolios. Single `holdings` table per user (simpler than the multi-portfolio model sketched in §2.1 — sufficient for the MVP manual tracker). `holdings` migration applied via `migrate deploy` (init had drift from the manually-run TimescaleDB hypertable, so deploy was used to avoid a reset). `PortfolioBuilder` loads/autosaves to the account when signed in, client-only otherwise. Verified end-to-end.
+
+> TimescaleDB note: the hypertable was created outside Prisma's migration history, so `migrate dev` reports drift. Use `migrate deploy` for new migrations, or fold the hypertable SQL into a migration later to remove the drift.
+
 ---
 
 ## 1. Why now

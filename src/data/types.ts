@@ -19,6 +19,26 @@ export interface RawPricePoint {
   volume: number;
 }
 
+/**
+ * Raw, as-reported financial statement figures for one reporting period.
+ * These are inputs only — every ratio/score is COMPUTED by the rules engine
+ * (src/rules), never stored pre-derived and never produced by an LLM (G1).
+ * Monetary figures are in Naira.
+ */
+export interface Fundamentals {
+  ticker: Ticker;
+  /** Reporting period label, e.g. `FY2023`. */
+  period: string;
+  revenue: number;
+  netIncome: number;
+  /** Shares outstanding (count). */
+  shareCount: number;
+  /** Dividend per share declared for the period (₦). */
+  dividendPerShare: number;
+  totalEquity: number;
+  totalDebt: number;
+}
+
 export type CorporateActionType = 'bonus' | 'split' | 'rights';
 
 /** Bonus or split: `newShares` new per `perHeld` held (N new per M held). */

@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation';
 import { dataStore } from '@/data';
-import { getAdjustedSeries } from '@/api';
+import { getAdjustedSeries, getReportCard } from '@/api';
 import { TrendChart } from '@/web/components/TrendChart';
+import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [company, series] = await Promise.all([
+  const [company, series, reportCard] = await Promise.all([
     dataStore.getCompany(ticker),
     getAdjustedSeries(ticker),
+    getReportCard(ticker),
   ]);
 
   if (!company || !series) notFound();
@@ -25,6 +27,8 @@ export default async function StockPage({ params }: { params: { ticker: string }
       <p className="stock-page__sector">{company.sector}</p>
 
       <TrendChart series={series} label={company.name} />
+
+      {reportCard && <ReportCard card={reportCard} />}
 
       <Disclaimer />
     </div>

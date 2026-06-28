@@ -3,6 +3,7 @@ export type {
   CorporateAction,
   CorporateActionTerms,
   CorporateActionType,
+  Fundamentals,
   RawPricePoint,
   RightsTerms,
   Ticker,

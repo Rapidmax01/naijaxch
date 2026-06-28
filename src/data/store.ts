@@ -9,12 +9,14 @@
 
 import type {
   CorporateAction,
+  Fundamentals,
   RawPricePoint,
   Ticker,
 } from './types';
 import {
   SAMPLE_COMPANIES,
   SAMPLE_CORPORATE_ACTIONS,
+  SAMPLE_FUNDAMENTALS,
   SAMPLE_RAW_PRICES,
   type SampleCompany,
 } from './fixtures/sample-stocks';
@@ -24,6 +26,7 @@ export interface SourceOfTruth {
   getCompany(ticker: Ticker): Promise<SampleCompany | null>;
   getRawPrices(ticker: Ticker): Promise<RawPricePoint[]>;
   getCorporateActions(ticker: Ticker): Promise<CorporateAction[]>;
+  getFundamentals(ticker: Ticker): Promise<Fundamentals | null>;
 }
 
 class InMemorySourceOfTruth implements SourceOfTruth {
@@ -41,6 +44,10 @@ class InMemorySourceOfTruth implements SourceOfTruth {
 
   async getCorporateActions(ticker: Ticker): Promise<CorporateAction[]> {
     return SAMPLE_CORPORATE_ACTIONS[ticker] ?? [];
+  }
+
+  async getFundamentals(ticker: Ticker): Promise<Fundamentals | null> {
+    return SAMPLE_FUNDAMENTALS[ticker] ?? null;
   }
 }
 

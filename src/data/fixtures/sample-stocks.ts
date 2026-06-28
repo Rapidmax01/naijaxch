@@ -6,7 +6,7 @@
  * Generated deterministically (no randomness) so tests and snapshots are stable.
  */
 
-import type { CorporateAction, RawPricePoint, Ticker } from '../types';
+import type { CorporateAction, Fundamentals, RawPricePoint, Ticker } from '../types';
 
 export interface SampleCompany {
   ticker: Ticker;
@@ -76,6 +76,44 @@ for (const p of SAMPLE_RAW_PRICES.GTCO!) {
     p.close = Math.round(p.close * (10 / 11) * 100) / 100; // 1-for-10 → ×10/11
   }
 }
+
+/**
+ * Sample fundamentals (placeholder figures, not real filings). Chosen so the
+ * report card exercises every status path: DANGCEM healthy, GTCO high yield /
+ * thin cover, MTNN a loss-making period.
+ */
+export const SAMPLE_FUNDAMENTALS: Record<Ticker, Fundamentals> = {
+  DANGCEM: {
+    ticker: 'DANGCEM',
+    period: 'FY2023',
+    revenue: 2_200_000_000_000,
+    netIncome: 455_000_000_000,
+    shareCount: 17_040_000_000,
+    dividendPerShare: 30,
+    totalEquity: 1_500_000_000_000,
+    totalDebt: 900_000_000_000,
+  },
+  GTCO: {
+    ticker: 'GTCO',
+    period: 'FY2023',
+    revenue: 1_186_000_000_000,
+    netIncome: 539_000_000_000,
+    shareCount: 29_430_000_000,
+    dividendPerShare: 18, // declared above EPS → cover below 1
+    totalEquity: 1_500_000_000_000,
+    totalDebt: 400_000_000_000,
+  },
+  MTNN: {
+    ticker: 'MTNN',
+    period: 'FY2023',
+    revenue: 2_470_000_000_000,
+    netIncome: -137_000_000_000, // loss-making period
+    shareCount: 20_350_000_000,
+    dividendPerShare: 0,
+    totalEquity: -40_000_000_000,
+    totalDebt: 1_100_000_000_000,
+  },
+};
 
 export const SAMPLE_CORPORATE_ACTIONS: Record<Ticker, CorporateAction[]> = {
   DANGCEM: [],

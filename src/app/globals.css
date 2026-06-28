@@ -504,6 +504,13 @@ button {
   margin: 0;
   font-weight: 600;
 }
+.trendchart__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 .trendchart__timeframes {
   display: inline-flex;
   gap: 0.15rem;
@@ -511,6 +518,42 @@ button {
   border: 1px solid var(--line);
   padding: 0.2rem;
   border-radius: 999px;
+}
+.trendchart__indicators {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+.trendchart__ind {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.trendchart__ind-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ma, var(--faint));
+  opacity: 0.45;
+}
+.trendchart__ind:hover {
+  color: var(--ink);
+}
+.trendchart__ind.is-on {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ma) 45%, var(--line));
+  background: color-mix(in srgb, var(--ma) 8%, var(--paper));
+}
+.trendchart__ind.is-on .trendchart__ind-dot {
+  opacity: 1;
 }
 .trendchart__tf {
   min-width: 3rem;

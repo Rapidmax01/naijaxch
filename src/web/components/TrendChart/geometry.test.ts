@@ -47,6 +47,28 @@ describe('buildGeometry', () => {
   });
 });
 
+describe('buildGeometry overlays', () => {
+  const dims = { width: 100, height: 100, padding: 0 };
+
+  it('builds an overlay path that skips leading nulls', () => {
+    const g = buildGeometry(pts([10, 20, 30]), dims, [{ key: 'ma', values: [null, 15, 25] }]);
+    expect(g.overlays).toHaveLength(1);
+    // Path starts at the first non-null point (index 1), so begins with M.
+    expect(g.overlays[0]!.d.startsWith('M')).toBe(true);
+    expect(g.overlays[0]!.d).not.toContain('NaN');
+  });
+
+  it('expands the y-domain to include overlay values', () => {
+    // Close range is 10..20, but the overlay reaches 40 → max must be 40.
+    const g = buildGeometry(pts([10, 20]), dims, [{ key: 'ma', values: [40, 40] }]);
+    expect(g.max).toBe(40);
+  });
+
+  it('no overlays by default', () => {
+    expect(buildGeometry(pts([1, 2]), dims).overlays).toEqual([]);
+  });
+});
+
 describe('nearestIndex', () => {
   const coords = [
     { x: 0, y: 0 },

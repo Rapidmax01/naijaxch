@@ -65,3 +65,16 @@ npm run db:seed       # load the sample data into the DB
 - Money math uses decimal.js; every adjustment factor is unit-tested.
 
 The previous crypto-tooling site was removed in a clean-slate rebuild; its history remains in git.
+
+## Contributing
+
+`master` is protected. Changes land via pull request and must pass CI
+(`typecheck · lint · test · build`) before merge — direct pushes are blocked.
+
+```bash
+git checkout -b my-change
+# … commit …
+git push -u origin my-change
+gh pr create --fill
+gh pr merge --squash   # once CI is green and the branch is up to date
+```

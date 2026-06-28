@@ -5,14 +5,16 @@
  * explicit human approval (separate, paid licence). New third-party data
  * integrations require sign-off (CLAUDE.md #6).
  *
- * Phase-1 status: pipeline built; runs off the fixture source (placeholder NGX
- * data) until the licensed feed lands. Run with `npm run ingest`.
+ * Phase-1 status: pipeline built; the real NGX adapter is wired behind the
+ * MarketDataSource interface and used when configured (NGX_DATA_API_BASE + key,
+ * delayed/EOD only), else the fixture source. Run with `npm run ingest`.
  */
 
 export { runIngestion, type IngestionSummary } from './jobs';
 export type { MarketDataSource } from './sources/types';
 export { FixtureMarketDataSource } from './sources/fixture-source';
-export { NgxMarketDataSource } from './sources/ngx-source';
+export { NgxMarketDataSource, ngxSourceConfigured } from './sources/ngx-source';
+export { selectMarketDataSource } from './sources/select';
 export { PrismaMarketDataWriter, type MarketDataWriter } from './writer';
 export {
   cleanActions,

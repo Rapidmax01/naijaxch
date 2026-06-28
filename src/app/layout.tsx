@@ -3,6 +3,8 @@ import { Hanken_Grotesk, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { AuthSessionProvider } from '@/web/components/auth/SessionProvider';
 import { HeaderAuth } from '@/web/components/auth/HeaderAuth';
+import { SiteNav } from '@/web/components/layout/SiteNav';
+import { NAV } from '@/web/components/layout/nav';
 import { DISCLAIMER_TEXT } from '@/web/components/common/Disclaimer';
 
 const sans = Hanken_Grotesk({
@@ -22,15 +24,6 @@ export const metadata: Metadata = {
     'The first platform that makes NGX (Nigerian Exchange) trend analysis fluid. Research, tools, and community for Nigerian stocks. Delayed/end-of-day data.',
 };
 
-const NAV = [
-  { href: '/', label: 'Markets' },
-  { href: '/screener', label: 'Screener' },
-  { href: '/heatmap', label: 'Heatmap' },
-  { href: '/watchlist', label: 'Watchlist' },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/pricing', label: 'Pricing' },
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
@@ -42,13 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="brand__mark" aria-hidden />
                 <span className="brand__word">NaijaXch</span>
               </a>
-              <nav className="site-nav" aria-label="Primary">
-                {NAV.map((item) => (
-                  <a key={item.href} href={item.href} className="site-nav__link">
-                    {item.label}
-                  </a>
-                ))}
-              </nav>
+              <SiteNav />
               <div className="site-header__auth">
                 <HeaderAuth />
               </div>

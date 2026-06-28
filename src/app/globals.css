@@ -184,6 +184,13 @@ button {
   background: var(--paper-2);
   text-decoration: none;
 }
+.site-nav__link.is-active {
+  color: var(--accent-ink);
+  background: var(--accent-wash);
+}
+.site-nav__link.is-active:hover {
+  background: var(--accent-wash);
+}
 .site-header__auth {
   flex-shrink: 0;
 }
@@ -863,8 +870,23 @@ button {
   padding: 0.9rem 1.1rem;
   background: var(--paper);
   border: 1px solid var(--line);
+  border-left-width: 3px;
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
+}
+.pulse__stat--up {
+  background: linear-gradient(180deg, var(--up-wash), var(--paper) 70%);
+  border-color: var(--line);
+  border-left-color: var(--up);
+}
+.pulse__stat--down {
+  background: linear-gradient(180deg, var(--down-wash), var(--paper) 70%);
+  border-color: var(--line);
+  border-left-color: var(--down);
+}
+.pulse__stat--flat {
+  background: linear-gradient(180deg, var(--paper-2), var(--paper) 70%);
+  border-left-color: var(--faint);
 }
 .pulse__num {
   font-family: var(--font-display);

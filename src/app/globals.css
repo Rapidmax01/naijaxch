@@ -459,6 +459,40 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Watchlist --- */
+.stock-page__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.watch-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+.watch-btn.is-watching {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+.watchlist__remove {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.watchlist__empty {
+  color: var(--muted);
+  padding: 1.5rem 0;
+}
+
 /* --- Disclaimer (G2) --- */
 .disclaimer {
   margin-top: 1rem;

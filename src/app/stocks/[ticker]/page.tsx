@@ -3,6 +3,7 @@ import { dataStore } from '@/data';
 import { getAdjustedSeries, getReportCard } from '@/api';
 import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
+import { WatchButton } from '@/web/components/watchlist/WatchButton';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
@@ -21,10 +22,15 @@ export default async function StockPage({ params }: { params: { ticker: string }
         <a href="/">← All companies</a>
       </nav>
 
-      <h1 className="stock-page__title">
-        {company.name} <span className="stock-page__ticker">{company.ticker}</span>
-      </h1>
-      <p className="stock-page__sector">{company.sector}</p>
+      <div className="stock-page__heading">
+        <div>
+          <h1 className="stock-page__title">
+            {company.name} <span className="stock-page__ticker">{company.ticker}</span>
+          </h1>
+          <p className="stock-page__sector">{company.sector}</p>
+        </div>
+        <WatchButton ticker={company.ticker} />
+      </div>
 
       <TrendChart series={series} label={company.name} />
 

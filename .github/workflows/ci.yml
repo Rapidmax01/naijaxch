@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # postinstall runs `prisma generate`; no DB needed for that.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # No DATABASE_URL → the in-memory fixture store is used, so the build
+      # needs no database. AUTH_SECRET is a throwaway just to satisfy build-time
+      # init; it is never used to issue real sessions in CI.
+      - name: Build
+        run: npm run build
+        env:
+          AUTH_SECRET: ci-build-secret-not-used

@@ -72,6 +72,32 @@ describe('buildGeometry overlays', () => {
   });
 });
 
+describe('buildGeometry bands', () => {
+  const dims = { width: 100, height: 100, padding: 0 };
+
+  it('builds a closed fill over the defined run and expands the domain', () => {
+    const g = buildGeometry(pts([10, 12, 14]), dims, [], false, [
+      { key: 'bb', upper: [null, 18, 20], lower: [null, 8, 9] },
+    ]);
+    expect(g.bands).toHaveLength(1);
+    expect(g.bands[0]!.fill.startsWith('M')).toBe(true);
+    expect(g.bands[0]!.fill.endsWith('Z')).toBe(true);
+    expect(g.max).toBe(20); // band upper lifts the domain
+    expect(g.min).toBe(8); // band lower lowers it
+  });
+
+  it('empty fill when no index has both edges', () => {
+    const g = buildGeometry(pts([10, 12]), dims, [], false, [
+      { key: 'bb', upper: [null, null], lower: [null, null] },
+    ]);
+    expect(g.bands[0]!.fill).toBe('');
+  });
+
+  it('no bands by default', () => {
+    expect(buildGeometry(pts([1, 2]), dims).bands).toEqual([]);
+  });
+});
+
 describe('buildGeometry candles', () => {
   const dims = { width: 100, height: 100, padding: 0 };
   function ohlc(rows: [number, number, number, number][]): PricePoint[] {

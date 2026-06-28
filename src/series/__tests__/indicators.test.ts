@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bollinger, ema, sma } from '../indicators';
+import { bollinger, ema, macd, rsi, sma } from '../indicators';
 
 describe('sma', () => {
   it('is null until the period is reached, then the trailing mean', () => {
@@ -52,5 +52,62 @@ describe('bollinger', () => {
       expect(b.upper[i]!).toBeGreaterThanOrEqual(m);
       expect(b.lower[i]!).toBeLessThanOrEqual(m);
     });
+  });
+});
+
+describe('rsi', () => {
+  it('is null until the period is reached', () => {
+    const r = rsi([1, 2, 3], 14);
+    expect(r).toEqual([null, null, null]);
+  });
+
+  it('is 100 when every change is a gain', () => {
+    const r = rsi([1, 2, 3, 4, 5], 2);
+    // From index 2 onward there are no losses → RSI pinned at 100.
+    expect(r.slice(2).every((v) => v === 100)).toBe(true);
+  });
+
+  it('is 0 when every change is a loss', () => {
+    const r = rsi([5, 4, 3, 2, 1], 2);
+    expect(r.slice(2).every((v) => v === 0)).toBe(true);
+  });
+
+  it('stays within 0..100 on a mixed series', () => {
+    const r = rsi([44, 44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42], 5);
+    r.forEach((v) => {
+      if (v == null) return;
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(100);
+    });
+  });
+
+  it('throws on a non-positive period', () => {
+    expect(() => rsi([1, 2, 3], 0)).toThrow();
+  });
+});
+
+describe('macd', () => {
+  it('macd line is defined once the slow EMA is, and equals fast − slow', () => {
+    const values = [1, 2, 3, 4, 5, 6, 7, 8];
+    const m = macd(values, 2, 4, 2);
+    // slow EMA (period 4) seeds at index 3 → macd null before, defined from 3.
+    expect(m.macd.slice(0, 3).every((v) => v == null)).toBe(true);
+    expect(m.macd[3]).not.toBeNull();
+  });
+
+  it('histogram equals macd − signal wherever both are defined', () => {
+    const values = [3, 5, 2, 8, 6, 9, 4, 11, 7, 12, 5, 13];
+    const m = macd(values, 3, 6, 3);
+    m.histogram.forEach((h, i) => {
+      if (h == null) return;
+      expect(h).toBeCloseTo(m.macd[i]! - m.signal[i]!, 4);
+    });
+  });
+
+  it('macd is positive for a steadily rising series', () => {
+    const values = Array.from({ length: 40 }, (_, i) => i + 1);
+    const m = macd(values);
+    const last = m.macd[m.macd.length - 1]!;
+    expect(last).toBeGreaterThan(0);
   });
 });

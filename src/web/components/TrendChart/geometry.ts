@@ -226,6 +226,92 @@ export function buildVolumeBars(points: PricePoint[], dims: ChartDims): VolumeBa
   });
 }
 
+/**
+ * Oscillator sub-panel geometry (RSI / MACD). One or more lines, an optional
+ * histogram, and horizontal guide levels — all mapped over a shared y-domain,
+ * x-aligned to the price chart (same point count).
+ */
+export interface OscSpec {
+  lines: { key: string; values: (number | null)[] }[];
+  histogram?: (number | null)[];
+  /** Fixed domain (e.g. [0,100] for RSI). Auto-fit from the data when omitted. */
+  domain?: [number, number];
+  /** Horizontal reference levels to draw (e.g. 30/70 for RSI, 0 for MACD). */
+  guides?: number[];
+}
+
+export interface OscBar {
+  x: number;
+  halfWidth: number;
+  zeroY: number;
+  valueY: number;
+  positive: boolean;
+}
+
+export interface OscGeometry {
+  lines: { key: string; d: string }[];
+  bars: OscBar[];
+  guides: { level: number; y: number }[];
+  min: number;
+  max: number;
+}
+
+export function buildOscillator(dims: ChartDims, spec: OscSpec): OscGeometry {
+  const pad = dims.padding ?? 8;
+  const innerW = Math.max(1, dims.width - pad * 2);
+  const innerH = Math.max(1, dims.height - pad * 2);
+  const count = Math.max(0, ...spec.lines.map((l) => l.values.length), spec.histogram?.length ?? 0);
+  if (count === 0) return { lines: [], bars: [], guides: [], min: 0, max: 0 };
+
+  let min: number;
+  let max: number;
+  if (spec.domain) {
+    [min, max] = spec.domain;
+  } else {
+    const vals: number[] = [];
+    for (const l of spec.lines) for (const v of l.values) if (v != null) vals.push(v);
+    if (spec.histogram) for (const v of spec.histogram) if (v != null) vals.push(v);
+    if (spec.guides) vals.push(...spec.guides);
+    if (spec.histogram) vals.push(0); // keep the zero line in view
+    min = vals.length ? Math.min(...vals) : 0;
+    max = vals.length ? Math.max(...vals) : 1;
+    if (min === max) {
+      min -= 1;
+      max += 1;
+    }
+  }
+  const span = max - min || 1;
+  const xAt = (i: number) => (count === 1 ? pad + innerW / 2 : pad + (i / (count - 1)) * innerW);
+  const yAt = (v: number) => pad + innerH - ((v - min) / span) * innerH;
+
+  const lines = spec.lines.map((l) => {
+    let d = '';
+    let move = true;
+    l.values.forEach((v, i) => {
+      if (v == null) {
+        move = true;
+        return;
+      }
+      const cmd = move ? 'M' : 'L';
+      d += `${d ? ' ' : ''}${cmd}${xAt(i).toFixed(2)},${yAt(v).toFixed(2)}`;
+      move = false;
+    });
+    return { key: l.key, d };
+  });
+
+  const zeroY = yAt(Math.max(min, Math.min(max, 0)));
+  const step = count > 1 ? innerW / (count - 1) : innerW;
+  const halfWidth = Math.max(0.6, Math.min(6, (step * 0.6) / 2));
+  const bars: OscBar[] = (spec.histogram ?? [])
+    .map((v, i) =>
+      v == null ? null : { x: xAt(i), halfWidth, zeroY, valueY: yAt(v), positive: v >= 0 },
+    )
+    .filter((b): b is OscBar => b !== null);
+
+  const guides = (spec.guides ?? []).map((level) => ({ level, y: yAt(level) }));
+  return { lines, bars, guides, min, max };
+}
+
 /** Index of the coordinate nearest a pointer x (for scrub snapping). */
 export function nearestIndex(coords: Pt[], x: number): number {
   if (coords.length === 0) return -1;

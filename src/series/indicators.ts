@@ -45,6 +45,86 @@ export function ema(values: number[], period: number): (number | null)[] {
   return out;
 }
 
+/**
+ * Wilder's Relative Strength Index (0–100). Null until `period` changes exist.
+ */
+export function rsi(values: number[], period = 14): (number | null)[] {
+  if (period <= 0) throw new Error('RSI period must be positive');
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  if (values.length <= period) return out;
+
+  const rsiFrom = (avgGain: Decimal, avgLoss: Decimal): number => {
+    if (avgLoss.isZero()) return avgGain.isZero() ? 50 : 100;
+    const rs = avgGain.div(avgLoss);
+    return new Decimal(100)
+      .minus(new Decimal(100).div(rs.plus(1)))
+      .toDecimalPlaces(2)
+      .toNumber();
+  };
+
+  let avgGain = new Decimal(0);
+  let avgLoss = new Decimal(0);
+  for (let i = 1; i <= period; i++) {
+    const diff = new Decimal(values[i]!).minus(values[i - 1]!);
+    if (diff.gt(0)) avgGain = avgGain.plus(diff);
+    else avgLoss = avgLoss.plus(diff.abs());
+  }
+  avgGain = avgGain.div(period);
+  avgLoss = avgLoss.div(period);
+  out[period] = rsiFrom(avgGain, avgLoss);
+
+  for (let i = period + 1; i < values.length; i++) {
+    const diff = new Decimal(values[i]!).minus(values[i - 1]!);
+    const gain = diff.gt(0) ? diff : new Decimal(0);
+    const loss = diff.lt(0) ? diff.abs() : new Decimal(0);
+    avgGain = avgGain.times(period - 1).plus(gain).div(period);
+    avgLoss = avgLoss.times(period - 1).plus(loss).div(period);
+    out[i] = rsiFrom(avgGain, avgLoss);
+  }
+  return out;
+}
+
+export interface Macd {
+  macd: (number | null)[];
+  signal: (number | null)[];
+  histogram: (number | null)[];
+}
+
+/** MACD line (fast EMA − slow EMA), signal (EMA of MACD), and the histogram. */
+export function macd(values: number[], fast = 12, slow = 26, signalPeriod = 9): Macd {
+  const emaFast = ema(values, fast);
+  const emaSlow = ema(values, slow);
+
+  const macdLine: (number | null)[] = values.map((_, i) =>
+    emaFast[i] != null && emaSlow[i] != null
+      ? new Decimal(emaFast[i]!).minus(emaSlow[i]!).toDecimalPlaces(4).toNumber()
+      : null,
+  );
+
+  // Signal = EMA of the defined MACD values, mapped back to their indices.
+  const definedIdx: number[] = [];
+  const definedVals: number[] = [];
+  macdLine.forEach((v, i) => {
+    if (v != null) {
+      definedIdx.push(i);
+      definedVals.push(v);
+    }
+  });
+  const sigVals = ema(definedVals, signalPeriod);
+  const signal: (number | null)[] = new Array(values.length).fill(null);
+  definedIdx.forEach((idx, k) => {
+    signal[idx] = sigVals[k] ?? null;
+  });
+
+  const histogram: (number | null)[] = values.map((_, i) =>
+    macdLine[i] != null && signal[i] != null
+      ? new Decimal(macdLine[i]!).minus(signal[i]!).toDecimalPlaces(4).toNumber()
+      : null,
+  );
+
+  return { macd: macdLine, signal, histogram };
+}
+
 export interface BollingerBands {
   middle: (number | null)[];
   upper: (number | null)[];

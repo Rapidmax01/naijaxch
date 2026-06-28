@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PricePoint } from '@/series/types';
-import { buildGeometry, buildVolumeBars, nearestIndex } from './geometry';
+import { buildGeometry, buildOscillator, buildVolumeBars, nearestIndex } from './geometry';
 
 function pts(values: number[]): PricePoint[] {
   return values.map((v, i) => ({
@@ -168,6 +168,50 @@ describe('buildVolumeBars', () => {
 
   it('returns nothing for an empty series', () => {
     expect(buildVolumeBars([], dims)).toEqual([]);
+  });
+});
+
+describe('buildOscillator', () => {
+  const dims = { width: 100, height: 50, padding: 0 };
+
+  it('maps a fixed RSI domain with higher levels nearer the top', () => {
+    const g = buildOscillator(dims, {
+      lines: [{ key: 'rsi', values: [null, 30, 50, 70] }],
+      domain: [0, 100],
+      guides: [30, 70],
+    });
+    expect(g.min).toBe(0);
+    expect(g.max).toBe(100);
+    const g30 = g.guides.find((x) => x.level === 30)!;
+    const g70 = g.guides.find((x) => x.level === 70)!;
+    expect(g70.y).toBeLessThan(g30.y); // 70 sits above 30
+    expect(g.lines[0]!.d.startsWith('M')).toBe(true);
+  });
+
+  it('auto-fits the domain around zero for a histogram', () => {
+    const g = buildOscillator(dims, {
+      lines: [{ key: 'macd', values: [-1, 2] }],
+      histogram: [-1, 1],
+      guides: [0],
+    });
+    expect(g.min).toBeLessThanOrEqual(0);
+    expect(g.max).toBeGreaterThanOrEqual(0);
+    expect(g.bars).toHaveLength(2);
+    expect(g.bars[0]!.positive).toBe(false);
+    expect(g.bars[1]!.positive).toBe(true);
+  });
+
+  it('drops null histogram entries but keeps bar x-alignment', () => {
+    const g = buildOscillator(dims, {
+      lines: [{ key: 'macd', values: [null, 1, 2] }],
+      histogram: [null, 1, -1],
+    });
+    expect(g.bars).toHaveLength(2);
+    expect(g.bars[0]!.x).toBeGreaterThan(0); // first real bar is index 1, not 0
+  });
+
+  it('returns empty geometry for no data', () => {
+    expect(buildOscillator(dims, { lines: [] }).lines).toEqual([]);
   });
 });
 

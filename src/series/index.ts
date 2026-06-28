@@ -22,5 +22,5 @@ export {
   type WindowStats,
 } from './window';
 export { buildPortfolioSeries, type Holding } from './portfolio';
-export { sma } from './indicators';
+export { bollinger, ema, sma, type BollingerBands } from './indicators';
 export { formatCompact, formatDate, formatNaira, formatPct } from './format';

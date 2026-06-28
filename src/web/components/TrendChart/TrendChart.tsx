@@ -15,6 +15,8 @@ import type { PriceSeries } from '@/series/types';
 import {
   DEFAULT_TIMEFRAME,
   TIMEFRAMES,
+  bollinger,
+  ema,
   formatCompact,
   formatDate,
   formatNaira,
@@ -33,14 +35,18 @@ const VOL_H = 64;
 /** Timeframes gated behind Premium (full trend history — spec §7). */
 const PREMIUM_TIMEFRAMES: Timeframe[] = ['5Y', 'MAX'];
 
-/** Moving-average overlays (computed deterministically from adjClose — G1). */
-const MOVING_AVERAGES = [
-  { key: 'ma50', label: 'MA 50', period: 50, color: 'var(--gold)' },
-  { key: 'ma200', label: 'MA 200', period: 200, color: '#3b5bdb' },
+/** Line-overlay indicators (computed deterministically from adjClose — G1). */
+const LINE_INDICATORS = [
+  { key: 'ma50', label: 'MA 50', color: 'var(--gold)', compute: (c: number[]) => sma(c, 50) },
+  { key: 'ma200', label: 'MA 200', color: '#3b5bdb', compute: (c: number[]) => sma(c, 200) },
+  { key: 'ema20', label: 'EMA 20', color: '#0b7285', compute: (c: number[]) => ema(c, 20) },
 ] as const;
-const MA_COLOR: Record<string, string> = Object.fromEntries(
-  MOVING_AVERAGES.map((m) => [m.key, m.color]),
-);
+const BB_PERIOD = 20;
+const BB_COLOR = '#6741d9';
+const OVERLAY_COLOR: Record<string, string> = {
+  ...Object.fromEntries(LINE_INDICATORS.map((m) => [m.key, m.color])),
+  bbmid: BB_COLOR,
+};
 
 type ChartType = 'line' | 'candles';
 
@@ -57,7 +63,8 @@ export interface TrendChartProps {
 export function TrendChart({ series, label, premium = true, allowCandles = true }: TrendChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
-  const [activeMAs, setActiveMAs] = useState<Set<string>>(() => new Set(['ma50']));
+  const [activeInd, setActiveInd] = useState<Set<string>>(() => new Set(['ma50']));
+  const [showBB, setShowBB] = useState(false);
   const [chartType, setChartType] = useState<ChartType>('line');
   const [showVolume, setShowVolume] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -69,23 +76,38 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
 
   const windowed = useMemo(() => windowSeries(series, timeframe), [series, timeframe]);
 
-  // Moving averages are computed over the FULL series (so trailing values are
+  // Indicators are computed over the FULL series (so trailing values are
   // correct), then sliced to the visible window.
-  const maByKey = useMemo(() => {
+  const wlen = windowed.points.length;
+  const lineByKey = useMemo(() => {
     const closes = series.points.map((p) => p.adjClose);
-    const wlen = windowed.points.length;
     const out: Record<string, (number | null)[]> = {};
-    for (const ma of MOVING_AVERAGES) out[ma.key] = sma(closes, ma.period).slice(-wlen);
+    for (const ind of LINE_INDICATORS) out[ind.key] = ind.compute(closes).slice(-wlen);
     return out;
-  }, [series, windowed.points.length]);
+  }, [series, wlen]);
 
-  const overlays = useMemo(
-    () =>
-      MOVING_AVERAGES.filter((ma) => activeMAs.has(ma.key)).map((ma) => ({
-        key: ma.key,
-        values: maByKey[ma.key]!,
-      })),
-    [activeMAs, maByKey],
+  const bbBands = useMemo(() => {
+    if (!showBB) return null;
+    const closes = series.points.map((p) => p.adjClose);
+    const b = bollinger(closes, BB_PERIOD, 2);
+    return {
+      middle: b.middle.slice(-wlen),
+      upper: b.upper.slice(-wlen),
+      lower: b.lower.slice(-wlen),
+    };
+  }, [series, wlen, showBB]);
+
+  const overlays = useMemo(() => {
+    const o: { key: string; values: (number | null)[] }[] = LINE_INDICATORS.filter((ind) =>
+      activeInd.has(ind.key),
+    ).map((ind) => ({ key: ind.key, values: lineByKey[ind.key]! }));
+    if (bbBands) o.push({ key: 'bbmid', values: bbBands.middle });
+    return o;
+  }, [activeInd, lineByKey, bbBands]);
+
+  const bands = useMemo(
+    () => (bbBands ? [{ key: 'bb', upper: bbBands.upper, lower: bbBands.lower }] : []),
+    [bbBands],
   );
 
   const geometry = useMemo(
@@ -95,8 +117,9 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
         { width: VIEW_W, height: VIEW_H, padding: 12 },
         overlays,
         showCandles,
+        bands,
       ),
-    [windowed, overlays, showCandles],
+    [windowed, overlays, showCandles, bands],
   );
 
   const volumeBars = useMemo(
@@ -208,6 +231,9 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
           strokeOpacity={0.3}
           strokeDasharray="3 5"
         />
+        {geometry.bands.map((b) => (
+          <path key={b.key} d={b.fill} fill={BB_COLOR} fillOpacity={0.08} stroke="none" />
+        ))}
         {showCandles ? (
           <g className="trendchart__candles">
             {geometry.candles.map((cd, i) => {
@@ -247,8 +273,9 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
             key={o.key}
             d={o.d}
             fill="none"
-            stroke={MA_COLOR[o.key]}
-            strokeWidth={1.4}
+            stroke={OVERLAY_COLOR[o.key]}
+            strokeWidth={o.key === 'bbmid' ? 1 : 1.4}
+            strokeDasharray={o.key === 'bbmid' ? '4 3' : undefined}
             strokeOpacity={0.95}
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -331,30 +358,40 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
               ))}
             </div>
           )}
-          <div className="trendchart__indicators" role="group" aria-label="Moving averages">
-            {MOVING_AVERAGES.map((ma) => {
-            const on = activeMAs.has(ma.key);
-            return (
-              <button
-                key={ma.key}
-                type="button"
-                className={`trendchart__ind${on ? ' is-on' : ''}`}
-                aria-pressed={on}
-                style={{ ['--ma' as string]: ma.color }}
-                onClick={() =>
-                  setActiveMAs((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(ma.key)) next.delete(ma.key);
-                    else next.add(ma.key);
-                    return next;
-                  })
-                }
-              >
-                <span className="trendchart__ind-dot" aria-hidden />
-                {ma.label}
-              </button>
-            );
-          })}
+          <div className="trendchart__indicators" role="group" aria-label="Indicators">
+            {LINE_INDICATORS.map((ind) => {
+              const on = activeInd.has(ind.key);
+              return (
+                <button
+                  key={ind.key}
+                  type="button"
+                  className={`trendchart__ind${on ? ' is-on' : ''}`}
+                  aria-pressed={on}
+                  style={{ ['--ma' as string]: ind.color }}
+                  onClick={() =>
+                    setActiveInd((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(ind.key)) next.delete(ind.key);
+                      else next.add(ind.key);
+                      return next;
+                    })
+                  }
+                >
+                  <span className="trendchart__ind-dot" aria-hidden />
+                  {ind.label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`trendchart__ind${showBB ? ' is-on' : ''}`}
+              aria-pressed={showBB}
+              style={{ ['--ma' as string]: BB_COLOR }}
+              onClick={() => setShowBB((v) => !v)}
+            >
+              <span className="trendchart__ind-dot" aria-hidden />
+              BB
+            </button>
           </div>
           {allowCandles && (
             <button

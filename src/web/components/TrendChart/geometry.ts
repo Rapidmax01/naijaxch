@@ -22,6 +22,19 @@ export interface OverlayPath {
   d: string;
 }
 
+/** An upper/lower envelope (e.g. Bollinger Bands) aligned to the points. */
+export interface BandInput {
+  key: string;
+  upper: (number | null)[];
+  lower: (number | null)[];
+}
+
+export interface BandPath {
+  key: string;
+  /** Filled area between upper and lower. */
+  fill: string;
+}
+
 /** A single candlestick in pixel space. */
 export interface Candle {
   x: number;
@@ -44,6 +57,8 @@ export interface ChartGeometry {
   baselineY: number;
   /** SVG paths for each overlay series (gaps where the value is null). */
   overlays: OverlayPath[];
+  /** Filled envelope paths (e.g. Bollinger Bands). */
+  bands: BandPath[];
   /** Candlestick geometry (only when `candles` is requested). */
   candles: Candle[];
   min: number;
@@ -66,6 +81,7 @@ export function buildGeometry(
   dims: ChartDims,
   overlays: OverlayInput[] = [],
   candles = false,
+  bands: BandInput[] = [],
 ): ChartGeometry {
   const pad = dims.padding ?? 8;
   const w = dims.width;
@@ -80,6 +96,7 @@ export function buildGeometry(
       coords: [],
       baselineY: h / 2,
       overlays: [],
+      bands: [],
       candles: [],
       min: 0,
       max: 0,
@@ -87,7 +104,7 @@ export function buildGeometry(
   }
 
   // Domain spans the plotted price (close, or high/low when showing candles)
-  // plus every non-null overlay value, so nothing is clipped.
+  // plus every non-null overlay/band value, so nothing is clipped.
   const domainValues: number[] = [];
   for (const p of points) {
     if (candles) domainValues.push(p.adjHigh, p.adjLow);
@@ -95,6 +112,10 @@ export function buildGeometry(
   }
   for (const o of overlays) {
     for (const v of o.values) if (v != null) domainValues.push(v);
+  }
+  for (const b of bands) {
+    for (const v of b.upper) if (v != null) domainValues.push(v);
+    for (const v of b.lower) if (v != null) domainValues.push(v);
   }
   const min = Math.min(...domainValues);
   const max = Math.max(...domainValues);
@@ -133,6 +154,22 @@ export function buildGeometry(
     return { key: o.key, d };
   });
 
+  // Bollinger-style fill: upper edge left→right, lower edge right→left, closed.
+  // Built over the contiguous run of indices where both edges are defined.
+  const bandPaths: BandPath[] = bands.map((b) => {
+    const defined: number[] = [];
+    for (let i = 0; i < points.length; i++) {
+      if (b.upper[i] != null && b.lower[i] != null) defined.push(i);
+    }
+    if (defined.length === 0) return { key: b.key, fill: '' };
+    const up = defined.map((i) => `${xAt(i).toFixed(2)},${yAt(b.upper[i]!).toFixed(2)}`);
+    const lo = [...defined]
+      .reverse()
+      .map((i) => `${xAt(i).toFixed(2)},${yAt(b.lower[i]!).toFixed(2)}`);
+    const fill = `M${up.join(' L')} L${lo.join(' L')} Z`;
+    return { key: b.key, fill };
+  });
+
   const candleGeom: Candle[] = candles
     ? points.map((p, i) => {
         const step = points.length > 1 ? innerW / (points.length - 1) : innerW;
@@ -148,7 +185,17 @@ export function buildGeometry(
       })
     : [];
 
-  return { line, area, coords, baselineY, overlays: overlayPaths, candles: candleGeom, min, max };
+  return {
+    line,
+    area,
+    coords,
+    baselineY,
+    overlays: overlayPaths,
+    bands: bandPaths,
+    candles: candleGeom,
+    min,
+    max,
+  };
 }
 
 /** A single volume bar in pixel space (aligned to the price chart's x-scale). */

@@ -400,6 +400,65 @@ body {
   color: var(--muted);
 }
 
+/* --- Heatmap / pulse --- */
+.pulse {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+.pulse__stat {
+  display: flex;
+  flex-direction: column;
+}
+.pulse__num {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.pulse__num--up {
+  color: var(--up);
+}
+.pulse__num--down {
+  color: var(--down);
+}
+.pulse__label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.heatmap__sector {
+  margin-bottom: 1.25rem;
+}
+.heatmap__sector-title {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+.heatmap__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+.tile__ticker {
+  font-weight: 700;
+}
+.tile__change {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Disclaimer (G2) --- */
 .disclaimer {
   margin-top: 1rem;

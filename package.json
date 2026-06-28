@@ -14,10 +14,10 @@
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d db",
     "db:migrate": "prisma migrate dev",
-    "db:timescale": "psql \"$DATABASE_URL\" -f prisma/sql/timescale.sql",
+    "db:timescale": "prisma db execute --file ./prisma/sql/timescale.sql --schema ./prisma/schema.prisma",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
-    "ingest": "tsx src/ingestion/run.ts"
+    "ingest": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local src/ingestion/run.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

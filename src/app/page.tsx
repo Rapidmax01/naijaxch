@@ -12,6 +12,7 @@ export default async function HomePage() {
       </p>
 
       <p className="home__cta">
+        <a href="/screener">Screen NGX stocks →</a>
         <a href="/portfolio">View a portfolio-level trend →</a>
       </p>
 

@@ -176,9 +176,80 @@ body {
   color: var(--muted);
 }
 
+.home__cta {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
 .home__cta a {
   font-weight: 600;
   color: var(--ink);
+}
+
+/* --- Screener --- */
+.screener__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.screener__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.screener__field input,
+.screener__field select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.375rem;
+  font: inherit;
+  color: var(--ink);
+}
+.screener__field input[type='number'] {
+  width: 6rem;
+}
+.screener__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.screener__table th,
+.screener__table td {
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.screener__table th.is-numeric,
+.screener__table td.is-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.screener__table th button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.screener__table td a {
+  text-decoration: none;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.screener__name {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.screener__count {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin-top: 0.75rem;
 }
 
 /* --- Portfolio --- */

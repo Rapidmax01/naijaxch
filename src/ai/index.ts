@@ -1,26 +1,20 @@
 /**
- * src/ai — grounded AI summary service + validation gate (NOT YET IMPLEMENTED).
+ * src/ai — grounded AI summary service + validation gate.
  *
- * The LLM only narrates figures that have ALREADY been computed and validated
- * by src/rules / src/series. It NEVER produces, estimates, or fills in a number
- * (G1 / TS4). A validation gate must block publishing if any number in the AI
- * output does not trace to source data. Generate once per filing, cache.
- *
- * GUARDRAIL: changes to AI grounding / validation-gate logic require human
- * approval (CLAUDE.md). Full mechanics belong in .claude/rules/ai-pipeline.md
- * (to be authored with sign-off). Default model: claude-opus-4-8.
- *
- * Intentionally a stub — implementing the grounding/gate needs explicit sign-off.
+ * GUARDRAIL G1: numbers are NEVER produced by the language model — it narrates
+ * with {{placeholders}} and the gate substitutes validated, computed figures.
+ * GUARDRAIL: changes to grounding / gate logic require human approval (CLAUDE.md
+ * #4). Full mechanics: .claude/rules/ai-pipeline.md.
  */
 
-export interface GroundedSummaryInput {
-  ticker: string;
-  /** Pre-computed, validated figures the model may narrate (never invent). */
-  figures: Record<string, number>;
-}
-
-export async function generateGroundedSummary(_input: GroundedSummaryInput): Promise<never> {
-  throw new Error(
-    'AI summary service not implemented. Requires human approval for grounding + validation-gate logic (G1).',
-  );
-}
+export { buildFacts, type SummaryFacts } from './facts';
+export {
+  hasAdviceLanguage,
+  hasRawDigits,
+  renderNarration,
+  usedPlaceholders,
+  validateNarration,
+  type GateResult,
+} from './gate';
+export { aiEnabled } from './client';
+export { generateSummary, type SummaryResult, type SummaryStatus } from './summary';

@@ -1,19 +1,21 @@
 import { notFound } from 'next/navigation';
 import { dataStore } from '@/data';
-import { getAdjustedSeries, getReportCard } from '@/api';
+import { getAdjustedSeries, getReportCard, getStoredSummary } from '@/api';
 import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
+import { AiSummary } from '@/web/components/ai/AiSummary';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
 import { WatchButton } from '@/web/components/watchlist/WatchButton';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [company, series, reportCard, actions] = await Promise.all([
+  const [company, series, reportCard, actions, aiSummary] = await Promise.all([
     dataStore.getCompany(ticker),
     getAdjustedSeries(ticker),
     getReportCard(ticker),
     dataStore.getCorporateActions(ticker),
+    getStoredSummary(ticker),
   ]);
 
   if (!company || !series) notFound();
@@ -35,6 +37,8 @@ export default async function StockPage({ params }: { params: { ticker: string }
       </div>
 
       <TrendChart series={series} label={company.name} />
+
+      {aiSummary && <AiSummary data={aiSummary} />}
 
       {reportCard && <ReportCard card={reportCard} />}
 

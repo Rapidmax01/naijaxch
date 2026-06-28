@@ -17,12 +17,14 @@
     "db:timescale": "prisma db execute --file ./prisma/sql/timescale.sql --schema ./prisma/schema.prisma",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
-    "ingest": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local src/ingestion/run.ts"
+    "ingest": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local src/ingestion/run.ts",
+    "ai:generate": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local src/ai/generate.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",

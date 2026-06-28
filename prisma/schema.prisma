@@ -25,8 +25,22 @@ model Company {
   rawPrices         RawPrice[]
   corporateActions  CorporateAction[]
   fundamentals      Fundamentals[]
+  aiSummaries       AiSummary[]
 
   @@map("companies")
+}
+
+// Cached AI summary per company (generate once per filing — never on page load).
+// The summary text is grounded + gate-validated (G1); see .claude/rules/ai-pipeline.md.
+model AiSummary {
+  ticker    String   @id
+  period    String
+  summary   String
+  model     String
+  createdAt DateTime @default(now()) @map("created_at")
+  company   Company  @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+
+  @@map("ai_summaries")
 }
 
 model RawPrice {

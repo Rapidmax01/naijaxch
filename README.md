@@ -1,5 +1,7 @@
 # NaijaXch
 
+[![CI](https://github.com/Rapidmax01/naijaxch/actions/workflows/ci.yml/badge.svg)](https://github.com/Rapidmax01/naijaxch/actions/workflows/ci.yml)
+
 **The platform that makes NGX (Nigerian Exchange) trend analysis fluid** — Robinhood-grade interactive charting for Nigerian stocks, surrounded by a research, tools, and community layer. Phase 1.
 
 > Not a broker. No trade execution, no customer funds, no personalised advice, NGX-only, delayed/EOD data, responsive web. See `CLAUDE.md` for the full guardrails and `docs/NaijaXch-Phase1-Build-Spec.md` for the product spec.

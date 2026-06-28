@@ -135,6 +135,15 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
           </g>
         )}
       </svg>
+        {locked && (
+          <div className="trendchart__lock">
+            <p>Full history (5Y / Max) is a Premium feature.</p>
+            <a href="/pricing" className="upgrade-prompt__cta">
+              See plans →
+            </a>
+          </div>
+        )}
+      </div>
 
       <div className="trendchart__timeframes" role="group" aria-label="Timeframe">
         {TIMEFRAMES.map((tf) => (

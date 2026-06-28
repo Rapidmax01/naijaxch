@@ -14,7 +14,12 @@ const STATUS_LABEL: Record<string, string> = {
   watch: 'Watch',
 };
 
-export function ReportCard({ card }: { card: ReportCardData }) {
+/** Free users see a limited report card (spec §7). */
+const FREE_METRIC_COUNT = 2;
+
+export function ReportCard({ card, premium = true }: { card: ReportCardData; premium?: boolean }) {
+  const metrics = premium ? card.metrics : card.metrics.slice(0, FREE_METRIC_COUNT);
+
   return (
     <section className="reportcard" aria-label="Automated report card">
       <header className="reportcard__head">
@@ -22,7 +27,7 @@ export function ReportCard({ card }: { card: ReportCardData }) {
         <span className="reportcard__period">{card.period}</span>
       </header>
 
-      {card.flags.length > 0 && (
+      {premium && card.flags.length > 0 && (
         <ul className="reportcard__flags">
           {card.flags.map((flag, i) => (
             <li key={i} className="reportcard__flag">
@@ -33,7 +38,7 @@ export function ReportCard({ card }: { card: ReportCardData }) {
       )}
 
       <dl className="reportcard__metrics">
-        {card.metrics.map((m) => (
+        {metrics.map((m) => (
           <div key={m.key} className={`reportcard__metric reportcard__metric--${m.status}`}>
             <dt className="reportcard__label">{m.label}</dt>
             <dd className="reportcard__value">
@@ -46,6 +51,13 @@ export function ReportCard({ card }: { card: ReportCardData }) {
           </div>
         ))}
       </dl>
+
+      {!premium && card.metrics.length > FREE_METRIC_COUNT && (
+        <p className="reportcard__locked">
+          {card.metrics.length - FREE_METRIC_COUNT} more metrics, flags, and notes on{' '}
+          <a href="/pricing">Premium</a>.
+        </p>
+      )}
     </section>
   );
 }

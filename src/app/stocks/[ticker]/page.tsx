@@ -6,16 +6,19 @@ import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
 import { WatchButton } from '@/web/components/watchlist/WatchButton';
+import { UpgradePrompt } from '@/web/components/billing/UpgradePrompt';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
+import { isPremium } from '@/billing';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [company, series, reportCard, actions, aiSummary] = await Promise.all([
+  const [company, series, reportCard, actions, aiSummary, premium] = await Promise.all([
     dataStore.getCompany(ticker),
     getAdjustedSeries(ticker),
     getReportCard(ticker),
     dataStore.getCorporateActions(ticker),
     getStoredSummary(ticker),
+    isPremium(),
   ]);
 
   if (!company || !series) notFound();
@@ -36,11 +39,12 @@ export default async function StockPage({ params }: { params: { ticker: string }
         <WatchButton ticker={company.ticker} />
       </div>
 
-      <TrendChart series={series} label={company.name} />
+      <TrendChart series={series} label={company.name} premium={premium} />
 
-      {aiSummary && <AiSummary data={aiSummary} />}
+      {aiSummary &&
+        (premium ? <AiSummary data={aiSummary} /> : <UpgradePrompt feature="AI summaries" />)}
 
-      {reportCard && <ReportCard card={reportCard} />}
+      {reportCard && <ReportCard card={reportCard} premium={premium} />}
 
       <CorporateActions actions={actions} />
 

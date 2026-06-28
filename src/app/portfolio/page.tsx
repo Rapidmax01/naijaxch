@@ -1,4 +1,5 @@
 import { dataStore } from '@/data';
+import { isPremium } from '@/billing';
 import { PortfolioBuilder } from '@/web/components/portfolio/PortfolioBuilder';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
@@ -7,7 +8,7 @@ export const metadata = {
 };
 
 export default async function PortfolioPage() {
-  const companies = await dataStore.listCompanies();
+  const [companies, premium] = await Promise.all([dataStore.listCompanies(), isPremium()]);
 
   return (
     <div className="portfolio-page">
@@ -21,7 +22,7 @@ export default async function PortfolioPage() {
         EOD chart, summed across your stocks.
       </p>
 
-      <PortfolioBuilder companies={companies} />
+      <PortfolioBuilder companies={companies} premium={premium} />
 
       <Disclaimer />
     </div>

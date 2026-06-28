@@ -658,6 +658,62 @@ body {
   padding: 1.5rem 0;
 }
 
+/* --- Upgrade prompt / gating --- */
+.upgrade-prompt {
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  text-align: center;
+}
+.upgrade-prompt__title {
+  margin: 0;
+  font-weight: 700;
+}
+.upgrade-prompt__copy {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.upgrade-prompt__cta {
+  display: inline-block;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.trendchart__plot {
+  position: relative;
+}
+.trendchart__svg.is-locked {
+  filter: blur(6px);
+  pointer-events: none;
+}
+.trendchart__lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.55);
+}
+.reportcard__locked,
+.screener__locked {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.is-locked-row {
+  filter: blur(4px);
+  user-select: none;
+}
+
 /* --- Billing / pricing --- */
 .pricing__cards {
   display: grid;

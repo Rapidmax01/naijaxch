@@ -20,7 +20,13 @@ interface HoldingRow {
   quantity: number;
 }
 
-export function PortfolioBuilder({ companies }: { companies: SampleCompany[] }) {
+export function PortfolioBuilder({
+  companies,
+  premium = true,
+}: {
+  companies: SampleCompany[];
+  premium?: boolean;
+}) {
   const { status } = useSession();
   const authed = status === 'authenticated';
 
@@ -187,7 +193,17 @@ export function PortfolioBuilder({ companies }: { companies: SampleCompany[] }) 
       </div>
 
       <div className="portfolio__chart" aria-busy={loading}>
-        {series && series.points.length > 0 ? (
+        {!premium ? (
+          <div className="upgrade-prompt" role="note">
+            <p className="upgrade-prompt__title">Portfolio-level trend is a Premium feature</p>
+            <p className="upgrade-prompt__copy">
+              Track your holdings free; see their combined value over time on Premium.
+            </p>
+            <a href="/pricing" className="upgrade-prompt__cta">
+              See plans →
+            </a>
+          </div>
+        ) : series && series.points.length > 0 ? (
           <TrendChart series={series} label="Portfolio value" />
         ) : (
           <p className="portfolio__empty">

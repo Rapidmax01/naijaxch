@@ -46,7 +46,10 @@ function cell(key: SortKey, row: ScreenerRow): string {
   }
 }
 
-export function Screener({ rows }: { rows: ScreenerRow[] }) {
+/** Free users see the first few rows; the rest is a blurred teaser (spec §7). */
+const FREE_ROW_COUNT = 4;
+
+export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premium?: boolean }) {
   const [filter, setFilter] = useState<ScreenerFilter>(DEFAULT_FILTER);
   const [sort, setSort] = useState<Sort>({ key: 'changePct1Y', dir: 'desc' });
 
@@ -134,8 +137,8 @@ export function Screener({ rows }: { rows: ScreenerRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {visible.map((row) => (
-            <tr key={row.ticker}>
+          {visible.map((row, i) => (
+            <tr key={row.ticker} className={!premium && i >= FREE_ROW_COUNT ? 'is-locked-row' : ''}>
               {COLUMNS.map((col) => (
                 <td key={col.key} className={col.numeric ? 'is-numeric' : ''}>
                   {col.key === 'ticker' ? (
@@ -152,6 +155,12 @@ export function Screener({ rows }: { rows: ScreenerRow[] }) {
           ))}
         </tbody>
       </table>
+
+      {!premium && visible.length > FREE_ROW_COUNT && (
+        <p className="screener__locked">
+          Full screener results are a Premium feature. <a href="/pricing">See plans →</a>
+        </p>
+      )}
 
       <p className="screener__count">
         {visible.length} of {rows.length} {rows.length === 1 ? 'stock' : 'stocks'}

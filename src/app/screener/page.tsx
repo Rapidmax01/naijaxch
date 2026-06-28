@@ -1,4 +1,5 @@
 import { getScreenerRows } from '@/api';
+import { isPremium } from '@/billing';
 import { Screener } from '@/web/components/screener/Screener';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
 
@@ -7,7 +8,7 @@ export const metadata = {
 };
 
 export default async function ScreenerPage() {
-  const rows = await getScreenerRows();
+  const [rows, premium] = await Promise.all([getScreenerRows(), isPremium()]);
 
   return (
     <div className="screener-page">
@@ -21,7 +22,7 @@ export default async function ScreenerPage() {
         adjusted EOD series and reported fundamentals.
       </p>
 
-      <Screener rows={rows} />
+      <Screener rows={rows} premium={premium} />
 
       <Disclaimer />
     </div>

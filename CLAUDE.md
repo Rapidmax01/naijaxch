@@ -73,13 +73,15 @@ NEVER put API keys, tokens, DB credentials, or environment-specific values in co
 
 ## Stack & commands
 
-<!-- PLACEHOLDER — replace with the REAL commands after scaffolding. Wrong commands waste turns; delete any you haven't verified. -->
-- Stack: _(confirm)_ Next.js/React + Node, structured DB for fundamentals, time-series store for prices.
+- Stack: **Next.js 14 (App Router) + React 18 + TypeScript (strict)**. Single `src/` tree (see Architecture map). Money math via **decimal.js**. Source of truth: **PostgreSQL + TimescaleDB** (DB wiring deferred — see below). Tests: **Vitest**.
 - Install: `npm install`
 - Dev: `npm run dev`
 - Test: `npm test`  — **run before committing.**
-- Lint/format: `npm run lint`
-- DB migrations: _(fill in)_ — **migrations require human approval (see below).**
+- Typecheck: `npm run typecheck`
+- Lint: `npm run lint`
+- DB migrations: Postgres/TimescaleDB **not yet wired** — `src/data/` ships an in-memory, fixture-backed store. Adding the DB + migrations **requires human approval (see below).**
+
+> Next.js note: routing lives in `src/app/` (thin pages + `src/app/api/.../route.ts` handlers that delegate to `src/api/`). Reusable UI — including the trend chart — lives in `src/web/`. Handlers and components hold no data/business logic (layering rule).
 
 ## Conventions
 

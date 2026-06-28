@@ -35,10 +35,12 @@ export default async function HomePage() {
       <ul className="home__companies">
         {companies.map((c) => (
           <li key={c.ticker}>
-            <a href={`/stocks/${c.ticker}`}>
-              <strong>{c.ticker}</strong>
-              <span>{c.name}</span>
-              <span className="home__sector">{c.sector}</span>
+            <a href={`/stocks/${c.ticker}`} className="mkt">
+              <span className="mkt__row">
+                <strong className="mkt__ticker">{c.ticker}</strong>
+                <span className="mkt__sector">{c.sector}</span>
+              </span>
+              <span className="mkt__name">{c.name}</span>
             </a>
           </li>
         ))}

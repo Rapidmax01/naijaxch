@@ -23,4 +23,4 @@ export {
 } from './window';
 export { buildPortfolioSeries, type Holding } from './portfolio';
 export { sma } from './indicators';
-export { formatDate, formatNaira, formatPct } from './format';
+export { formatCompact, formatDate, formatNaira, formatPct } from './format';

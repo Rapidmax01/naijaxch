@@ -15,6 +15,7 @@ import type { PriceSeries } from '@/series/types';
 import {
   DEFAULT_TIMEFRAME,
   TIMEFRAMES,
+  formatCompact,
   formatDate,
   formatNaira,
   formatPct,
@@ -23,10 +24,11 @@ import {
   windowStats,
   type Timeframe,
 } from '@/series';
-import { buildGeometry, nearestIndex } from './geometry';
+import { buildGeometry, buildVolumeBars, nearestIndex } from './geometry';
 
 const VIEW_W = 720;
 const VIEW_H = 240;
+const VOL_H = 64;
 
 /** Timeframes gated behind Premium (full trend history — spec §7). */
 const PREMIUM_TIMEFRAMES: Timeframe[] = ['5Y', 'MAX'];
@@ -57,9 +59,11 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const [activeMAs, setActiveMAs] = useState<Set<string>>(() => new Set(['ma50']));
   const [chartType, setChartType] = useState<ChartType>('line');
+  const [showVolume, setShowVolume] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const showCandles = allowCandles && chartType === 'candles';
+  const showVol = allowCandles && showVolume;
 
   const locked = !premium && PREMIUM_TIMEFRAMES.includes(timeframe);
 
@@ -93,6 +97,11 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
         showCandles,
       ),
     [windowed, overlays, showCandles],
+  );
+
+  const volumeBars = useMemo(
+    () => (showVol ? buildVolumeBars(windowed.points, { width: VIEW_W, height: VOL_H, padding: 12 }) : []),
+    [showVol, windowed],
   );
   const stats = useMemo(
     () => windowStats(windowed, scrubIndex ?? undefined),
@@ -140,6 +149,30 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
           <div className="trendchart__hint" role="note">
             Thinly traded over this window — prices may move on low volume.
           </div>
+        )}
+        {allowCandles && (
+          <dl className="trendchart__ohlc" aria-label="Open, high, low, close, volume">
+            <div>
+              <dt>O</dt>
+              <dd>{formatNaira(activePoint.adjOpen)}</dd>
+            </div>
+            <div>
+              <dt>H</dt>
+              <dd>{formatNaira(activePoint.adjHigh)}</dd>
+            </div>
+            <div>
+              <dt>L</dt>
+              <dd>{formatNaira(activePoint.adjLow)}</dd>
+            </div>
+            <div>
+              <dt>C</dt>
+              <dd>{formatNaira(activePoint.adjClose)}</dd>
+            </div>
+            <div>
+              <dt>Vol</dt>
+              <dd>{formatCompact(activePoint.volume)}</dd>
+            </div>
+          </dl>
         )}
       </header>
 
@@ -239,6 +272,31 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
         )}
       </div>
 
+      {showVol && (
+        <svg
+          className="trendchart__volume"
+          viewBox={`0 0 ${VIEW_W} ${VOL_H}`}
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="Daily volume"
+        >
+          {volumeBars.map((b, i) => (
+            <rect
+              key={i}
+              x={b.x - b.halfWidth}
+              y={b.topY}
+              width={b.halfWidth * 2}
+              height={Math.max(0.5, b.bottomY - b.topY)}
+              fill={b.up ? 'var(--up)' : 'var(--down)'}
+              fillOpacity={0.5}
+            />
+          ))}
+          {cursor && (
+            <line x1={cursor.x} x2={cursor.x} y1={0} y2={VOL_H} stroke="var(--faint)" strokeOpacity={0.5} />
+          )}
+        </svg>
+      )}
+
       <div className="trendchart__controls">
         <div className="trendchart__timeframes" role="group" aria-label="Timeframe">
           {TIMEFRAMES.map((tf) => (
@@ -298,6 +356,18 @@ export function TrendChart({ series, label, premium = true, allowCandles = true 
             );
           })}
           </div>
+          {allowCandles && (
+            <button
+              type="button"
+              className={`trendchart__ind${showVolume ? ' is-on' : ''}`}
+              aria-pressed={showVolume}
+              style={{ ['--ma' as string]: 'var(--muted)' }}
+              onClick={() => setShowVolume((v) => !v)}
+            >
+              <span className="trendchart__ind-dot" aria-hidden />
+              Vol
+            </button>
+          )}
         </div>
       </div>
 

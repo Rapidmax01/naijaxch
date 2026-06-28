@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PricePoint } from '@/series/types';
-import { buildGeometry, nearestIndex } from './geometry';
+import { buildGeometry, buildVolumeBars, nearestIndex } from './geometry';
 
 function pts(values: number[]): PricePoint[] {
   return values.map((v, i) => ({
@@ -108,6 +108,40 @@ describe('buildGeometry candles', () => {
 
   it('no candles unless requested', () => {
     expect(buildGeometry(ohlc([[10, 12, 9, 11]]), dims).candles).toEqual([]);
+  });
+});
+
+describe('buildVolumeBars', () => {
+  const dims = { width: 100, height: 50, padding: 0 };
+  function volPts(vols: number[]): PricePoint[] {
+    return vols.map((v, i) => ({
+      ticker: 'D',
+      date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      close: 10,
+      adjClose: 10,
+      adjOpen: i % 2 === 0 ? 9 : 11, // alternate up/down
+      adjHigh: 12,
+      adjLow: 8,
+      volume: v,
+      adjFactor: 1,
+    }));
+  }
+
+  it('scales the tallest bar to the panel and shorter ones proportionally', () => {
+    const bars = buildVolumeBars(volPts([50, 100]), dims);
+    expect(bars).toHaveLength(2);
+    expect(bars[1]!.bottomY - bars[1]!.topY).toBeCloseTo(50, 5); // max → full height
+    expect(bars[0]!.bottomY - bars[0]!.topY).toBeCloseTo(25, 5); // half
+  });
+
+  it('colours bars by the day direction', () => {
+    const bars = buildVolumeBars(volPts([10, 10]), dims);
+    expect(bars[0]!.up).toBe(true); // open 9 < close 10
+    expect(bars[1]!.up).toBe(false); // open 11 > close 10
+  });
+
+  it('returns nothing for an empty series', () => {
+    expect(buildVolumeBars([], dims)).toEqual([]);
   });
 });
 

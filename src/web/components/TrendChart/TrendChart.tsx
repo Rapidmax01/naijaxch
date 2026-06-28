@@ -115,6 +115,12 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
         onTouchMove={(e) => handleMove(e.touches[0]!.clientX)}
         onTouchEnd={() => setScrubIndex(null)}
       >
+        <defs>
+          <linearGradient id="tc-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.22 }} />
+            <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
         {/* Reference line at the window's starting price (faint dashed). */}
         <line
           x1={0}
@@ -122,11 +128,18 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
           y1={geometry.baselineY}
           y2={geometry.baselineY}
           stroke="currentColor"
-          strokeOpacity={0.25}
-          strokeDasharray="4 4"
+          strokeOpacity={0.3}
+          strokeDasharray="3 5"
         />
-        <path d={geometry.area} fill={color} fillOpacity={0.12} />
-        <path d={geometry.line} fill="none" stroke={color} strokeWidth={2} />
+        <path d={geometry.area} fill="url(#tc-area)" />
+        <path
+          d={geometry.line}
+          fill="none"
+          stroke={color}
+          strokeWidth={2.25}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
 
         {cursor && (
           <g className="trendchart__crosshair">

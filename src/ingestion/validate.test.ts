@@ -9,7 +9,7 @@ import {
 } from './validate';
 
 function price(date: string, close: number, volume = 1000): RawPricePoint {
-  return { ticker: 'X', date, close, volume };
+  return { ticker: 'X', date, open: close, high: close, low: close, close, volume };
 }
 
 describe('isValidDate', () => {

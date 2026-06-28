@@ -46,6 +46,9 @@ export class PrismaMarketDataWriter implements MarketDataWriter {
       data: points.map((p) => ({
         ticker: p.ticker,
         date: new Date(`${p.date}T00:00:00Z`),
+        open: p.open,
+        high: p.high,
+        low: p.low,
         close: p.close,
         volume: BigInt(p.volume),
       })),

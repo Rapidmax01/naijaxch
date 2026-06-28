@@ -73,6 +73,10 @@ export function buildPortfolioSeries(
       date,
       close: value, // for a portfolio, raw == adjusted (already built from adjClose)
       adjClose: value,
+      // A portfolio has no OHLC — degenerate to the value (candles aren't shown).
+      adjOpen: value,
+      adjHigh: value,
+      adjLow: value,
       volume: 0,
       adjFactor: 1,
     };

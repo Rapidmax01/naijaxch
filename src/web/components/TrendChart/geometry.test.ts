@@ -8,6 +8,9 @@ function pts(values: number[]): PricePoint[] {
     date: `2024-01-${String(i + 1).padStart(2, '0')}`,
     close: v,
     adjClose: v,
+    adjOpen: v,
+    adjHigh: v,
+    adjLow: v,
     volume: 1000,
     adjFactor: 1,
   }));
@@ -66,6 +69,45 @@ describe('buildGeometry overlays', () => {
 
   it('no overlays by default', () => {
     expect(buildGeometry(pts([1, 2]), dims).overlays).toEqual([]);
+  });
+});
+
+describe('buildGeometry candles', () => {
+  const dims = { width: 100, height: 100, padding: 0 };
+  function ohlc(rows: [number, number, number, number][]): PricePoint[] {
+    return rows.map(([o, h, l, c], i) => ({
+      ticker: 'D',
+      date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      close: c,
+      adjClose: c,
+      adjOpen: o,
+      adjHigh: h,
+      adjLow: l,
+      volume: 1,
+      adjFactor: 1,
+    }));
+  }
+
+  it('returns one candle per point with correct up/down', () => {
+    const g = buildGeometry(ohlc([[10, 12, 9, 11], [11, 12, 8, 9]]), dims, [], true);
+    expect(g.candles).toHaveLength(2);
+    expect(g.candles[0]!.up).toBe(true); // close 11 >= open 10
+    expect(g.candles[1]!.up).toBe(false); // close 9 < open 11
+  });
+
+  it('expands the domain to highs and lows', () => {
+    const g = buildGeometry(ohlc([[10, 20, 5, 12]]), dims, [], true);
+    expect(g.max).toBe(20);
+    expect(g.min).toBe(5);
+  });
+
+  it('maps high above low (smaller y is higher)', () => {
+    const g = buildGeometry(ohlc([[10, 20, 5, 12]]), dims, [], true);
+    expect(g.candles[0]!.highY).toBeLessThan(g.candles[0]!.lowY);
+  });
+
+  it('no candles unless requested', () => {
+    expect(buildGeometry(ohlc([[10, 12, 9, 11]]), dims).candles).toEqual([]);
   });
 });
 

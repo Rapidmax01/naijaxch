@@ -47,15 +47,23 @@ export function mapCompany(raw: NgxEquity): Company {
 
 export interface NgxPrice {
   date?: string;
+  open?: number | string;
+  high?: number | string;
+  low?: number | string;
   close?: number | string;
   volume?: number | string;
 }
 
 export function mapPrice(ticker: Ticker, raw: NgxPrice): RawPricePoint {
+  const close = num(raw.close);
+  // Fall back to close if a tier omits a field (validate/clean drops bad rows).
   return {
     ticker,
     date: isoDate(raw.date),
-    close: num(raw.close),
+    open: raw.open != null ? num(raw.open) : close,
+    high: raw.high != null ? num(raw.high) : close,
+    low: raw.low != null ? num(raw.low) : close,
+    close,
     volume: Math.trunc(num(raw.volume)),
   };
 }

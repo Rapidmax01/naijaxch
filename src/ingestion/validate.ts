@@ -14,15 +14,16 @@ export function isValidDate(date: string): boolean {
   return Number.isFinite(t);
 }
 
-/** A price row is valid when its date is ISO, close is finite & > 0, volume ≥ 0. */
+/**
+ * A price row is valid when its date is ISO, OHLC are finite & > 0 with
+ * high ≥ low (and high/low bracket open/close), and volume ≥ 0.
+ */
 export function isValidPrice(p: RawPricePoint): boolean {
-  return (
-    isValidDate(p.date) &&
-    Number.isFinite(p.close) &&
-    p.close > 0 &&
-    Number.isFinite(p.volume) &&
-    p.volume >= 0
-  );
+  const ohlc = [p.open, p.high, p.low, p.close];
+  if (!ohlc.every((v) => Number.isFinite(v) && v > 0)) return false;
+  if (p.high < p.low) return false;
+  if (p.high < Math.max(p.open, p.close) || p.low > Math.min(p.open, p.close)) return false;
+  return isValidDate(p.date) && Number.isFinite(p.volume) && p.volume >= 0;
 }
 
 /** Drop invalid rows and collapse duplicate dates (last value wins). */

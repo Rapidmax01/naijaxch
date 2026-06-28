@@ -40,19 +40,26 @@ const MA_COLOR: Record<string, string> = Object.fromEntries(
   MOVING_AVERAGES.map((m) => [m.key, m.color]),
 );
 
+type ChartType = 'line' | 'candles';
+
 export interface TrendChartProps {
   series: PriceSeries;
   /** Display label (e.g. company name or "Portfolio"). */
   label: string;
   /** When false, 5Y/Max are shown as a blurred teaser with an upgrade CTA. */
   premium?: boolean;
+  /** Offer the candlestick view (off for portfolio value, which has no OHLC). */
+  allowCandles?: boolean;
 }
 
-export function TrendChart({ series, label, premium = true }: TrendChartProps) {
+export function TrendChart({ series, label, premium = true, allowCandles = true }: TrendChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const [activeMAs, setActiveMAs] = useState<Set<string>>(() => new Set(['ma50']));
+  const [chartType, setChartType] = useState<ChartType>('line');
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const showCandles = allowCandles && chartType === 'candles';
 
   const locked = !premium && PREMIUM_TIMEFRAMES.includes(timeframe);
 
@@ -78,8 +85,14 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
   );
 
   const geometry = useMemo(
-    () => buildGeometry(windowed.points, { width: VIEW_W, height: VIEW_H, padding: 12 }, overlays),
-    [windowed, overlays],
+    () =>
+      buildGeometry(
+        windowed.points,
+        { width: VIEW_W, height: VIEW_H, padding: 12 },
+        overlays,
+        showCandles,
+      ),
+    [windowed, overlays, showCandles],
   );
   const stats = useMemo(
     () => windowStats(windowed, scrubIndex ?? undefined),
@@ -162,15 +175,39 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
           strokeOpacity={0.3}
           strokeDasharray="3 5"
         />
-        <path d={geometry.area} fill="url(#tc-area)" />
-        <path
-          d={geometry.line}
-          fill="none"
-          stroke={color}
-          strokeWidth={2.25}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
+        {showCandles ? (
+          <g className="trendchart__candles">
+            {geometry.candles.map((cd, i) => {
+              const c = cd.up ? 'var(--up)' : 'var(--down)';
+              const bodyTop = Math.min(cd.openY, cd.closeY);
+              const bodyH = Math.max(1, Math.abs(cd.openY - cd.closeY));
+              return (
+                <g key={i}>
+                  <line x1={cd.x} x2={cd.x} y1={cd.highY} y2={cd.lowY} stroke={c} strokeWidth={1} />
+                  <rect
+                    x={cd.x - cd.halfWidth}
+                    y={bodyTop}
+                    width={cd.halfWidth * 2}
+                    height={bodyH}
+                    fill={c}
+                  />
+                </g>
+              );
+            })}
+          </g>
+        ) : (
+          <>
+            <path d={geometry.area} fill="url(#tc-area)" />
+            <path
+              d={geometry.line}
+              fill="none"
+              stroke={color}
+              strokeWidth={2.25}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </>
+        )}
 
         {geometry.overlays.map((o) => (
           <path
@@ -220,8 +257,24 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
           ))}
         </div>
 
-        <div className="trendchart__indicators" role="group" aria-label="Moving averages">
-          {MOVING_AVERAGES.map((ma) => {
+        <div className="trendchart__tools">
+          {allowCandles && (
+            <div className="trendchart__types" role="group" aria-label="Chart type">
+              {(['line', 'candles'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`trendchart__type${chartType === t ? ' is-active' : ''}`}
+                  aria-pressed={chartType === t}
+                  onClick={() => setChartType(t)}
+                >
+                  {t === 'line' ? 'Line' : 'Candles'}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="trendchart__indicators" role="group" aria-label="Moving averages">
+            {MOVING_AVERAGES.map((ma) => {
             const on = activeMAs.has(ma.key);
             return (
               <button
@@ -244,6 +297,7 @@ export function TrendChart({ series, label, premium = true }: TrendChartProps) {
               </button>
             );
           })}
+          </div>
         </div>
       </div>
 

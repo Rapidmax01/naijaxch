@@ -204,7 +204,7 @@ export function PortfolioBuilder({
             </a>
           </div>
         ) : series && series.points.length > 0 ? (
-          <TrendChart series={series} label="Portfolio value" />
+          <TrendChart series={series} label="Portfolio value" allowCandles={false} />
         ) : (
           <p className="portfolio__empty">
             {loading ? 'Building portfolio trend…' : 'Add holdings to see your portfolio trend.'}

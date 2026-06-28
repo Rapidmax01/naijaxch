@@ -519,6 +519,39 @@ button {
   padding: 0.2rem;
   border-radius: 999px;
 }
+.trendchart__tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.trendchart__types {
+  display: inline-flex;
+  gap: 0.15rem;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  padding: 0.2rem;
+  border-radius: 999px;
+}
+.trendchart__type {
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.trendchart__type:hover {
+  color: var(--ink);
+}
+.trendchart__type.is-active {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
 .trendchart__indicators {
   display: inline-flex;
   gap: 0.35rem;

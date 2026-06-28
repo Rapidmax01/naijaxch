@@ -46,6 +46,9 @@ model AiSummary {
 model RawPrice {
   ticker  String
   date    DateTime @db.Date
+  open    Decimal  @db.Decimal(18, 4)
+  high    Decimal  @db.Decimal(18, 4)
+  low     Decimal  @db.Decimal(18, 4)
   close   Decimal  @db.Decimal(18, 4) // unadjusted close (audit) — never plotted
   volume  BigInt
   company Company  @relation(fields: [ticker], references: [ticker], onDelete: Cascade)

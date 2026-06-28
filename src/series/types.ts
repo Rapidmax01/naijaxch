@@ -14,8 +14,12 @@ export interface PricePoint {
   date: string;
   /** Unadjusted close (reference/audit — NEVER plotted on a multi-period chart). */
   close: number;
-  /** Corporate-action-adjusted close — the value every chart plots. */
+  /** Corporate-action-adjusted close — the value the line chart plots. */
   adjClose: number;
+  /** Corporate-action-adjusted open/high/low — what the candlestick view plots (G6). */
+  adjOpen: number;
+  adjHigh: number;
+  adjLow: number;
   /** Day volume. */
   volume: number;
   /** Cumulative adjustment factor applied to this day (audit). */

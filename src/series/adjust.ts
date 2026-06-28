@@ -88,19 +88,26 @@ export function buildAdjustedSeries(
 
   const factored = actions.map((a) => ({ exDate: a.exDate, factor: actionFactor(a) }));
 
+  const adj = (value: number, f: Decimal) =>
+    new Decimal(value).times(f).toDecimalPlaces(ADJ_CLOSE_DP).toNumber();
+
   const points: PricePoint[] = sorted.map((p) => {
     let f = new Decimal(1);
     for (const a of factored) {
       if (a.exDate > p.date) f = f.times(a.factor);
     }
-    const adjClose = new Decimal(p.close).times(f).toDecimalPlaces(ADJ_CLOSE_DP).toNumber();
+    // The same cumulative factor adjusts every price field (open/high/low/close)
+    // so the candlestick view is continuous across ex-dates, like the line (G6).
     return {
       ticker: p.ticker,
       date: p.date,
       close: p.close,
       volume: p.volume,
       adjFactor: f.toNumber(),
-      adjClose,
+      adjClose: adj(p.close, f),
+      adjOpen: adj(p.open, f),
+      adjHigh: adj(p.high, f),
+      adjLow: adj(p.low, f),
     };
   });
 

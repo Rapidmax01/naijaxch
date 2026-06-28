@@ -22,6 +22,12 @@ export interface RawPricePoint {
   ticker: Ticker;
   /** ISO trading day, `YYYY-MM-DD`. */
   date: string;
+  /** Unadjusted day open (Naira). */
+  open: number;
+  /** Unadjusted day high (Naira). */
+  high: number;
+  /** Unadjusted day low (Naira). */
+  low: number;
   /** Unadjusted closing price in Naira (kept for reference/audit — never plotted). */
   close: number;
   /** Day volume (used for the "thinly traded" hint). */

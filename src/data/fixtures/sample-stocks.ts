@@ -6,13 +6,10 @@
  * Generated deterministically (no randomness) so tests and snapshots are stable.
  */
 
-import type { CorporateAction, Fundamentals, RawPricePoint, Ticker } from '../types';
+import type { Company, CorporateAction, Fundamentals, RawPricePoint, Ticker } from '../types';
 
-export interface SampleCompany {
-  ticker: Ticker;
-  name: string;
-  sector: string;
-}
+/** @deprecated use `Company` from `@/data/types` — kept for existing imports. */
+export type SampleCompany = Company;
 
 export const SAMPLE_COMPANIES: SampleCompany[] = [
   { ticker: 'DANGCEM', name: 'Dangote Cement Plc', sector: 'Industrial Goods' },

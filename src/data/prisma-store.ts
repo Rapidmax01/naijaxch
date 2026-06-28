@@ -17,11 +17,14 @@ import type { SampleCompany } from './fixtures/sample-stocks';
 
 const globalForPrisma = globalThis as unknown as { __naijaxchPrisma?: PrismaClient };
 
-function client(): PrismaClient {
+/** Shared, lazily-constructed Prisma client (one per process / dev reload). */
+export function getPrismaClient(): PrismaClient {
   const existing = globalForPrisma.__naijaxchPrisma ?? new PrismaClient();
   if (process.env.NODE_ENV !== 'production') globalForPrisma.__naijaxchPrisma = existing;
   return existing;
 }
+
+const client = getPrismaClient;
 
 /** ISO `YYYY-MM-DD` from a date-only column. */
 function isoDate(d: Date): string {

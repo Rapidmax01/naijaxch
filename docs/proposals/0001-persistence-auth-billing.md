@@ -9,6 +9,8 @@
 
 **Step 1 done (scaffold only):** Prisma schema for market-data tables, hypertable SQL, `PrismaSourceOfTruth` behind the existing interface, seed script, local `docker-compose`. The store falls back to the in-memory fixtures when `DATABASE_URL` is unset, so nothing is user-visibly changed until you run the (human-run) migrations. Follow-up when DB-backed: data-reading pages may need `force-dynamic`/revalidate since they currently prerender from fixtures at build.
 
+**Step 2 done:** ingestion pipeline (`src/ingestion`) — `MarketDataSource` interface, `MarketDataWriter` interface + Prisma writer (idempotent upserts), pure validate/clean layer, `runIngestion()` orchestration, `npm run ingest`. Source is the **fixture source** (placeholder) until the licensed NGX delayed/EOD feed is wired; `NgxMarketDataSource` is a stub marking that gated seam (G3). Tested via a fake writer (no DB needed).
+
 ---
 
 ## 1. Why now

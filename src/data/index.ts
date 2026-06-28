@@ -1,5 +1,6 @@
 export type {
   BonusOrSplitTerms,
+  Company,
   CorporateAction,
   CorporateActionTerms,
   CorporateActionType,

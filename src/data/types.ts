@@ -8,6 +8,15 @@
 
 export type Ticker = string;
 
+/** Reference data for one NGX-listed company. */
+export interface Company {
+  ticker: Ticker;
+  name: string;
+  sector: string;
+  /** Shares outstanding (count), when known. */
+  sharesOutstanding?: number;
+}
+
 /** One trading day's raw (unadjusted) close for an NGX equity. */
 export interface RawPricePoint {
   ticker: Ticker;

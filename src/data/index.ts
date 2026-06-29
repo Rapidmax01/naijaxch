@@ -4,10 +4,12 @@ export type {
   CorporateAction,
   CorporateActionTerms,
   CorporateActionType,
+  DelayedQuote,
   Fundamentals,
   RawPricePoint,
   RightsTerms,
   Ticker,
 } from './types';
+export { buildDelayedQuote, configuredDelayMinutes } from './quote';
 export { dataStore, type SourceOfTruth } from './store';
 export type { SampleCompany } from './fixtures/sample-stocks';

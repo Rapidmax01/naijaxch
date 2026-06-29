@@ -10,3 +10,4 @@ export {
 } from './watchlist';
 export { getHoldings, replaceHoldings, type AccountHolding } from './holdings';
 export { getStoredSummary, type StoredSummary } from './ai';
+export { getDelayedQuote } from './quote';

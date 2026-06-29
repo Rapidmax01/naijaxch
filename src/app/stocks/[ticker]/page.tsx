@@ -5,6 +5,7 @@ import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
+import { DelayedQuoteBadge } from '@/web/components/company/DelayedQuoteBadge';
 import { WatchButton } from '@/web/components/watchlist/WatchButton';
 import { UpgradePrompt } from '@/web/components/billing/UpgradePrompt';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
@@ -47,6 +48,7 @@ export default async function StockPage({ params }: { params: { ticker: string }
               {company.sector}
             </span>
           </p>
+          <DelayedQuoteBadge ticker={company.ticker} />
         </div>
         <WatchButton ticker={company.ticker} />
       </div>

@@ -121,7 +121,7 @@ function hash(s: string): number {
   return h >>> 0;
 }
 
-/** ~260 trading days ending 2024-12-31, weekdays only (fixed seed date). */
+/** Trading days ending 2024-12-31, weekdays only (fixed seed date). */
 function tradingDays(count: number): string[] {
   const days: string[] = [];
   const cursor = new Date(Date.UTC(2024, 11, 31));
@@ -133,7 +133,11 @@ function tradingDays(count: number): string[] {
   return days.reverse();
 }
 
-const DAYS = tradingDays(260);
+// ~5 years of EOD history (starts ~late 2019) so 5Y/Max charts are populated and
+// the fundamentals history (FY2019–FY2023) overlaps the price series for the
+// multi-year valuation context. Corporate-action ex-dates (chosen by index
+// below) apply by date, so the back-adjustment stays continuous (G6).
+const DAYS = tradingDays(1320);
 
 /** Deterministic price path: trend + sine wave, no randomness. */
 function syntheticCloses(base: number, amplitude: number, drift: number): number[] {

@@ -430,6 +430,54 @@ button {
   color: var(--muted);
   margin-top: 0.3rem;
 }
+.quote-badge {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  margin-top: 0.7rem;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.quote-badge__price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+.quote-badge__change {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.quote-badge__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  align-self: center;
+}
+.quote-badge--empty .quote-badge__price {
+  color: var(--muted);
+}
+.quote-badge--loading {
+  width: 220px;
+  height: 1.9rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--paper-2), var(--line), var(--paper-2));
+  background-size: 200% 100%;
+  animation: quote-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes quote-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
 
 /* ============================================================ Trend chart */
 .trendchart {

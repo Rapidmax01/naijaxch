@@ -9,10 +9,12 @@
 
 import type {
   CorporateAction,
+  DelayedQuote,
   Fundamentals,
   RawPricePoint,
   Ticker,
 } from './types';
+import { buildDelayedQuote, configuredDelayMinutes } from './quote';
 import {
   SAMPLE_COMPANIES,
   SAMPLE_CORPORATE_ACTIONS,
@@ -28,6 +30,8 @@ export interface SourceOfTruth {
   getRawPrices(ticker: Ticker): Promise<RawPricePoint[]>;
   getCorporateActions(ticker: Ticker): Promise<CorporateAction[]>;
   getFundamentals(ticker: Ticker): Promise<Fundamentals | null>;
+  /** Latest delayed/EOD quote for the company-page badge (display-only; TS2). */
+  getQuote(ticker: Ticker): Promise<DelayedQuote | null>;
 }
 
 class InMemorySourceOfTruth implements SourceOfTruth {
@@ -49,6 +53,20 @@ class InMemorySourceOfTruth implements SourceOfTruth {
 
   async getFundamentals(ticker: Ticker): Promise<Fundamentals | null> {
     return SAMPLE_FUNDAMENTALS[ticker] ?? null;
+  }
+
+  async getQuote(ticker: Ticker): Promise<DelayedQuote | null> {
+    const prices = SAMPLE_RAW_PRICES[ticker] ?? [];
+    if (prices.length === 0) return null;
+    const last = prices[prices.length - 1]!;
+    const prev = prices[prices.length - 2] ?? last;
+    return buildDelayedQuote({
+      ticker,
+      price: last.close,
+      previousClose: prev.close,
+      asOf: last.date,
+      delayMinutes: configuredDelayMinutes(),
+    });
   }
 }
 

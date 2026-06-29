@@ -11,7 +11,15 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import type { CorporateAction, CorporateActionType, Fundamentals, RawPricePoint, Ticker } from './types';
+import type {
+  CorporateAction,
+  CorporateActionType,
+  DelayedQuote,
+  Fundamentals,
+  RawPricePoint,
+  Ticker,
+} from './types';
+import { buildDelayedQuote, configuredDelayMinutes } from './quote';
 import type { SourceOfTruth } from './store';
 import type { SampleCompany } from './fixtures/sample-stocks';
 
@@ -87,5 +95,23 @@ export class PrismaSourceOfTruth implements SourceOfTruth {
       totalEquity: f.totalEquity.toNumber(),
       totalDebt: f.totalDebt.toNumber(),
     };
+  }
+
+  async getQuote(ticker: Ticker): Promise<DelayedQuote | null> {
+    const rows = await client().rawPrice.findMany({
+      where: { ticker },
+      orderBy: { date: 'desc' },
+      take: 2,
+    });
+    if (rows.length === 0) return null;
+    const last = rows[0]!;
+    const prev = rows[1] ?? last;
+    return buildDelayedQuote({
+      ticker,
+      price: last.close.toNumber(),
+      previousClose: prev.close.toNumber(),
+      asOf: isoDate(last.date),
+      delayMinutes: configuredDelayMinutes(),
+    });
   }
 }

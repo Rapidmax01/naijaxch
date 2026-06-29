@@ -35,6 +35,28 @@ export interface RawPricePoint {
 }
 
 /**
+ * A delayed (or end-of-day) last-trade quote for the company-page badge.
+ *
+ * Display-only and ALWAYS labelled with its delay (G3 / spec §9). This is NOT
+ * chart data: the trend chart plots the adjusted EOD series (TS2) and never
+ * consumes a quote. Numbers are computed deterministically (G1/TS4), not from
+ * an LLM, and rounded for display (TS3).
+ */
+export interface DelayedQuote {
+  ticker: Ticker;
+  /** Last delayed/EOD price (₦). */
+  price: number;
+  /** Change vs the previous close (₦). */
+  change: number;
+  /** Change vs the previous close (%). */
+  changePct: number;
+  /** ISO date (EOD) or datetime (delayed) the quote is "as of". */
+  asOf: string;
+  /** Quote delay in minutes; `null` means end-of-day (no intraday tier). */
+  delayMinutes: number | null;
+}
+
+/**
  * Raw, as-reported financial statement figures for one reporting period.
  * These are inputs only — every ratio/score is COMPUTED by the rules engine
  * (src/rules), never stored pre-derived and never produced by an LLM (G1).

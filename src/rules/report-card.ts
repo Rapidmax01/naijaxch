@@ -31,8 +31,21 @@ export interface ReportCard {
   period: string;
   currentPrice: number;
   metrics: Metric[];
+  /** Status tally across the metrics (general information only — G2). */
+  summary: ReportCardSummary;
   /** Notes from every `watch` metric, surfaced as headline flags. */
   flags: string[];
+}
+
+/**
+ * A factual tally of metric statuses — general information (G2), NOT a grade or
+ * recommendation. It only counts how the computed metrics fell out; it never
+ * says whether the stock is a good buy.
+ */
+export interface ReportCardSummary {
+  good: number;
+  neutral: number;
+  watch: number;
 }
 
 function round(d: Decimal, dp = 2): number {
@@ -139,11 +152,20 @@ export function computeReportCard(f: Fundamentals, currentPrice: number): Report
 
   const flags = metrics.filter((m) => m.status === 'watch' && m.note).map((m) => m.note!);
 
+  const summary = metrics.reduce<ReportCardSummary>(
+    (acc, m) => {
+      acc[m.status] += 1;
+      return acc;
+    },
+    { good: 0, neutral: 0, watch: 0 },
+  );
+
   return {
     ticker: f.ticker,
     period: f.period,
     currentPrice: round(price),
     metrics,
+    summary,
     flags,
   };
 }

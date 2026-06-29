@@ -54,6 +54,13 @@ describe('computeReportCard — healthy company at price ₦20', () => {
   it('has no watch flags', () => {
     expect(card.flags).toHaveLength(0);
   });
+
+  it('summary tallies metric statuses (general information, not a grade)', () => {
+    // eps/cover/margin/de good (4), pe/yield neutral (2), no watch.
+    expect(card.summary).toEqual({ good: 4, neutral: 2, watch: 0 });
+    const total = card.summary.good + card.summary.neutral + card.summary.watch;
+    expect(total).toBe(card.metrics.length);
+  });
 });
 
 describe('dividend cover below 1', () => {
@@ -65,6 +72,7 @@ describe('dividend cover below 1', () => {
     expect(card.flags).toContain(
       'Dividend cover is below 1 — the declared dividend exceeded earnings this period.',
     );
+    expect(card.summary.watch).toBeGreaterThanOrEqual(1); // cover counted as watch
   });
 });
 

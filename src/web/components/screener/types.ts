@@ -21,6 +21,12 @@ export interface ScreenerRow {
   avgVolume: number | null;
   /** True when 1Y window volume is below the "thinly traded" threshold. */
   thinlyTraded: boolean;
+  /** Revenue growth, latest period YoY (%). null without 2+ periods. */
+  revenueGrowth: number | null;
+  /** Return on equity, latest period (%). */
+  roe: number | null;
+  /** Current P/E vs its multi-year average (%, signed). null if not computable. */
+  peVsAvg: number | null;
 }
 
 export type SortKey =
@@ -32,7 +38,10 @@ export type SortKey =
   | 'netMargin'
   | 'dividendCover'
   | 'debtToEquity'
-  | 'avgVolume';
+  | 'avgVolume'
+  | 'revenueGrowth'
+  | 'roe'
+  | 'peVsAvg';
 
 export interface Sort {
   key: SortKey;
@@ -53,6 +62,10 @@ export interface ScreenerFilter {
   maxDebtToEquity: number | null;
   /** Lower 1Y-change bound (%); rows without a 1Y change are excluded when set. */
   minChangePct1Y: number | null;
+  /** Lower revenue-growth bound (%); rows without growth are excluded when set. */
+  minRevenueGrowth: number | null;
+  /** When true, keep only rows trading below their multi-year average P/E. */
+  belowAvgPe: boolean;
   /** When true, exclude rows flagged as thinly traded. */
   hideThinlyTraded: boolean;
   /** Free-text match on ticker or name. */
@@ -67,6 +80,8 @@ export const DEFAULT_FILTER: ScreenerFilter = {
   minNetMargin: null,
   maxDebtToEquity: null,
   minChangePct1Y: null,
+  minRevenueGrowth: null,
+  belowAvgPe: false,
   hideThinlyTraded: false,
   query: '',
 };
@@ -120,6 +135,20 @@ export const SCREENER_PRESETS: ScreenerPreset[] = [
     criteria: '1Y change ≥ 0%',
     filter: { minChangePct1Y: 0 },
     sort: { key: 'changePct1Y', dir: 'desc' },
+  },
+  {
+    key: 'growing-revenue',
+    label: 'Growing revenue',
+    criteria: 'Revenue growth > 0%',
+    filter: { minRevenueGrowth: 0 },
+    sort: { key: 'revenueGrowth', dir: 'desc' },
+  },
+  {
+    key: 'below-avg-pe',
+    label: 'Below avg P/E',
+    criteria: 'P/E below its multi-year average',
+    filter: { belowAvgPe: true },
+    sort: { key: 'peVsAvg', dir: 'asc' },
   },
 ];
 

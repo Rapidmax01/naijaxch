@@ -33,6 +33,12 @@ export function filterRows(rows: ScreenerRow[], filter: ScreenerFilter): Screene
     if (filter.minChangePct1Y != null) {
       if (row.changePct1Y == null || row.changePct1Y < filter.minChangePct1Y) return false;
     }
+    if (filter.minRevenueGrowth != null) {
+      if (row.revenueGrowth == null || row.revenueGrowth < filter.minRevenueGrowth) return false;
+    }
+    if (filter.belowAvgPe) {
+      if (row.peVsAvg == null || row.peVsAvg >= 0) return false;
+    }
     if (filter.hideThinlyTraded && row.thinlyTraded) return false;
     if (!matchesQuery(row, filter.query)) return false;
     return true;

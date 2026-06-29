@@ -30,8 +30,15 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: 'netMargin', label: 'Margin', numeric: true },
   { key: 'dividendCover', label: 'Cover', numeric: true },
   { key: 'debtToEquity', label: 'D/E', numeric: true },
+  { key: 'revenueGrowth', label: 'Rev YoY', numeric: true },
+  { key: 'roe', label: 'ROE', numeric: true },
+  { key: 'peVsAvg', label: 'P/E vs avg', numeric: true },
   { key: 'avgVolume', label: 'Avg Vol', numeric: true },
 ];
+
+function signedPct(v: number): string {
+  return `${v >= 0 ? '+' : ''}${v}%`;
+}
 
 function cell(key: SortKey, row: ScreenerRow): string {
   switch (key) {
@@ -53,6 +60,12 @@ function cell(key: SortKey, row: ScreenerRow): string {
       return row.debtToEquity == null ? '—' : `${row.debtToEquity}x`;
     case 'avgVolume':
       return row.avgVolume == null ? '—' : formatCompact(row.avgVolume);
+    case 'revenueGrowth':
+      return row.revenueGrowth == null ? '—' : signedPct(row.revenueGrowth);
+    case 'roe':
+      return row.roe == null ? '—' : `${row.roe}%`;
+    case 'peVsAvg':
+      return row.peVsAvg == null ? '—' : signedPct(row.peVsAvg);
   }
 }
 
@@ -208,6 +221,26 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
             value={filter.minChangePct1Y ?? ''}
             onChange={(e) => editFilter({ minChangePct1Y: numberOrNull(e.target.value) })}
           />
+        </label>
+        <label className="screener__field">
+          <span>Min rev growth %</span>
+          <input
+            type="number"
+            placeholder="—"
+            value={filter.minRevenueGrowth ?? ''}
+            onChange={(e) => editFilter({ minRevenueGrowth: numberOrNull(e.target.value) })}
+          />
+        </label>
+        <label className="screener__field screener__field--check">
+          <span>Valuation</span>
+          <span className="screener__check">
+            <input
+              type="checkbox"
+              checked={filter.belowAvgPe}
+              onChange={(e) => editFilter({ belowAvgPe: e.target.checked })}
+            />
+            Below avg P/E
+          </span>
         </label>
         <label className="screener__field screener__field--check">
           <span>Liquidity</span>

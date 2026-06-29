@@ -5,9 +5,10 @@
  */
 
 import { dataStore } from '@/data';
-import { computeReportCard } from '@/rules';
+import { computeGrowth, computeReportCard } from '@/rules';
 import { windowSeries, windowStats } from '@/series';
 import { getAdjustedSeries } from './series';
+import { peHistoryFrom } from './valuation';
 import type { ScreenerRow } from '@/web/components/screener/types';
 
 export async function getScreenerRows(): Promise<ScreenerRow[]> {
@@ -15,18 +16,23 @@ export async function getScreenerRows(): Promise<ScreenerRow[]> {
 
   const rows = await Promise.all(
     companies.map(async (c): Promise<ScreenerRow | null> => {
-      const [series, fundamentals] = await Promise.all([
+      const [series, history] = await Promise.all([
         getAdjustedSeries(c.ticker),
-        dataStore.getFundamentals(c.ticker),
+        dataStore.getFundamentalsHistory(c.ticker),
       ]);
       if (!series || series.points.length === 0) return null;
 
       const price = series.points.at(-1)!.adjClose;
       const oneYear = windowStats(windowSeries(series, '1Y'));
+      const fundamentals = history.at(-1) ?? null;
       const card = fundamentals ? computeReportCard(fundamentals, price) : null;
+      const growth = computeGrowth(history);
+      const valuation = peHistoryFrom(history, series);
 
       const metric = (key: string): number | null =>
         card?.metrics.find((m) => m.key === key)?.value ?? null;
+      const growthMetric = (key: string): number | null =>
+        growth?.metrics.find((m) => m.key === key)?.value ?? null;
 
       return {
         ticker: c.ticker,
@@ -41,6 +47,9 @@ export async function getScreenerRows(): Promise<ScreenerRow[]> {
         debtToEquity: metric('debtToEquity'),
         avgVolume: oneYear?.avgVolume ?? null,
         thinlyTraded: oneYear?.lowVolume ?? false,
+        revenueGrowth: growthMetric('revenueGrowth'),
+        roe: growthMetric('roe'),
+        peVsAvg: valuation?.pctVsAverage ?? null,
       };
     }),
   );

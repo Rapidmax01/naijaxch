@@ -8,9 +8,9 @@ import {
 } from './types';
 
 const ROWS: ScreenerRow[] = [
-  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2, debtToEquity: 0.5, avgVolume: 120000, thinlyTraded: false },
-  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5, debtToEquity: 1.8, avgVolume: 40000, thinlyTraded: false },
-  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null, debtToEquity: null, avgVolume: 200, thinlyTraded: true },
+  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2, debtToEquity: 0.5, avgVolume: 120000, thinlyTraded: false, revenueGrowth: 12, roe: 18, peVsAvg: -20 },
+  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5, debtToEquity: 1.8, avgVolume: 40000, thinlyTraded: false, revenueGrowth: -4, roe: 9, peVsAvg: 15 },
+  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null, debtToEquity: null, avgVolume: 200, thinlyTraded: true, revenueGrowth: null, roe: null, peVsAvg: null },
 ];
 
 describe('filterRows', () => {
@@ -52,6 +52,16 @@ describe('filterRows', () => {
   it('minChangePct1Y excludes weaker 1Y movers', () => {
     const out = filterRows(ROWS, { ...DEFAULT_FILTER, minChangePct1Y: 0 });
     expect(out.map((r) => r.ticker)).toEqual(['AAA', 'CCC']); // BBB -3 out
+  });
+
+  it('minRevenueGrowth excludes slower and null-growth rows', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, minRevenueGrowth: 0 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA']); // BBB -4 out, CCC null out
+  });
+
+  it('belowAvgPe keeps only names trading below their average P/E', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, belowAvgPe: true });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA']); // BBB +15 out, CCC null out
   });
 
   it('hideThinlyTraded drops flagged rows only', () => {

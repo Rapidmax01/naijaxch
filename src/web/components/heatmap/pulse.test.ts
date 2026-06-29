@@ -16,6 +16,9 @@ function row(ticker: string, changePct1Y: number | null): ScreenerRow {
     debtToEquity: null,
     avgVolume: null,
     thinlyTraded: false,
+    revenueGrowth: null,
+    roe: null,
+    peVsAvg: null,
   };
 }
 

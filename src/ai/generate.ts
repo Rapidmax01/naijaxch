@@ -8,7 +8,7 @@
  */
 
 import { dataStore } from '@/data';
-import { getReportCard } from '@/api';
+import { getGrowthReport, getPeHistory, getReportCard } from '@/api';
 import { aiEnabled, generateSummary } from '@/ai';
 import { getPrismaClient } from '@/data/prisma-store';
 
@@ -33,7 +33,12 @@ async function main() {
       continue;
     }
 
-    const result = await generateSummary(company, card);
+    const [growth, valuation] = await Promise.all([
+      getGrowthReport(company.ticker),
+      getPeHistory(company.ticker),
+    ]);
+
+    const result = await generateSummary(company, card, growth, valuation);
     if (result.status !== 'ok' || !result.summary) {
       console.log(`${company.ticker}: ${result.status}${result.reason ? ` (${result.reason})` : ''} — not stored`);
       continue;

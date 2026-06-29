@@ -39,6 +39,8 @@ export async function getScreenerRows(): Promise<ScreenerRow[]> {
         netMargin: metric('netMargin'),
         dividendCover: metric('dividendCover'),
         debtToEquity: metric('debtToEquity'),
+        avgVolume: oneYear?.avgVolume ?? null,
+        thinlyTraded: oneYear?.lowVolume ?? false,
       };
     }),
   );

@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { formatNaira, formatPct } from '@/series';
+import { formatCompact, formatNaira, formatPct } from '@/series';
 import { sectorColor } from '@/web/lib/sectors';
 import { applyScreener } from './filter';
 import {
@@ -30,6 +30,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: 'netMargin', label: 'Margin', numeric: true },
   { key: 'dividendCover', label: 'Cover', numeric: true },
   { key: 'debtToEquity', label: 'D/E', numeric: true },
+  { key: 'avgVolume', label: 'Avg Vol', numeric: true },
 ];
 
 function cell(key: SortKey, row: ScreenerRow): string {
@@ -50,6 +51,8 @@ function cell(key: SortKey, row: ScreenerRow): string {
       return row.dividendCover == null ? '—' : `${row.dividendCover}x`;
     case 'debtToEquity':
       return row.debtToEquity == null ? '—' : `${row.debtToEquity}x`;
+    case 'avgVolume':
+      return row.avgVolume == null ? '—' : formatCompact(row.avgVolume);
   }
 }
 
@@ -206,6 +209,17 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
             onChange={(e) => editFilter({ minChangePct1Y: numberOrNull(e.target.value) })}
           />
         </label>
+        <label className="screener__field screener__field--check">
+          <span>Liquidity</span>
+          <span className="screener__check">
+            <input
+              type="checkbox"
+              checked={filter.hideThinlyTraded}
+              onChange={(e) => editFilter({ hideThinlyTraded: e.target.checked })}
+            />
+            Hide thinly traded
+          </span>
+        </label>
       </div>
 
       <table className="screener__table">
@@ -238,6 +252,10 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
                         <span className="screener__name">{row.name}</span>
                       </span>
                     </a>
+                  ) : col.key === 'avgVolume' && row.thinlyTraded ? (
+                    <span className="screener__thin" title="Thinly traded over the past year">
+                      {cell(col.key, row)} <span className="screener__thin-tag">thin</span>
+                    </span>
                   ) : (
                     cell(col.key, row)
                   )}

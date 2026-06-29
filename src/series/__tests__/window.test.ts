@@ -71,6 +71,10 @@ describe('windowStats', () => {
     expect(windowStats(makeSeries([1, 2], 5000))!.lowVolume).toBe(false);
   });
 
+  it('reports the mean daily volume over the window', () => {
+    expect(windowStats(makeSeries([1, 2, 3], 5000))!.avgVolume).toBe(5000);
+  });
+
   it('returns null for an empty series', () => {
     expect(windowStats({ ticker: 'X', points: [] })).toBeNull();
   });

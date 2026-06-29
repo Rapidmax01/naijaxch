@@ -44,6 +44,8 @@ export interface WindowStats {
   isUp: boolean;
   /** Lowest window adjClose volume hint sum is available via `lowVolume`. */
   lowVolume: boolean;
+  /** Mean daily volume over the window (rounded to a whole number of shares). */
+  avgVolume: number;
 }
 
 /** Heuristic threshold (sum of window volume) below which we hint "thinly traded". */
@@ -73,5 +75,6 @@ export function windowStats(series: PriceSeries, atIndex?: number): WindowStats 
     changePct: changePct.toDecimalPlaces(2).toNumber(),
     isUp: changeAbs.greaterThanOrEqualTo(0),
     lowVolume: totalVolume < THIN_VOLUME_THRESHOLD,
+    avgVolume: Math.round(totalVolume / pts.length),
   };
 }

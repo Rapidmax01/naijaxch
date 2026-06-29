@@ -992,6 +992,40 @@ button {
 .screener__field input[type='number'] {
   width: 6rem;
 }
+.screener__field--check {
+  justify-content: flex-end;
+}
+.screener__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--ink);
+}
+.screener__check input {
+  width: auto;
+  accent-color: var(--accent);
+}
+.screener__thin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.screener__thin-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, var(--paper));
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line));
+  border-radius: 999px;
+  padding: 0.05rem 0.35rem;
+}
 .screener__table {
   width: 100%;
   border-collapse: collapse;

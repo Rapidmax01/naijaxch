@@ -773,6 +773,59 @@ button {
   background: var(--down-wash);
   color: #94223a;
 }
+.reportcard__context {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.reportcard__context-range {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.reportcard__context-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+}
+.reportcard__context-band {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--down), var(--paper-2) 50%, var(--up));
+}
+.reportcard__context-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--paper);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--shadow-sm);
+}
+.reportcard__context-ends {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  color: var(--ink);
+}
+.reportcard__context-notes {
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
 .reportcard__flags {
   list-style: none;
   padding: 0;

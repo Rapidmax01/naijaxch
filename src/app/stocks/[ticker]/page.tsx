@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { dataStore } from '@/data';
 import { getAdjustedSeries, getReportCard, getStoredSummary } from '@/api';
+import { priceContext } from '@/series';
 import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
@@ -58,7 +59,9 @@ export default async function StockPage({ params }: { params: { ticker: string }
       {aiSummary &&
         (premium ? <AiSummary data={aiSummary} /> : <UpgradePrompt feature="AI summaries" />)}
 
-      {reportCard && <ReportCard card={reportCard} premium={premium} />}
+      {reportCard && (
+        <ReportCard card={reportCard} premium={premium} context={priceContext(series, '1Y')} />
+      )}
 
       <CorporateActions actions={actions} />
 

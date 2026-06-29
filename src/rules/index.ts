@@ -14,3 +14,8 @@ export {
   type ReportCardSummary,
 } from './report-card';
 export { median, sectorPosition, type SectorPosition } from './sector';
+export {
+  computeGrowth,
+  type GrowthMetric,
+  type GrowthReport,
+} from './growth';

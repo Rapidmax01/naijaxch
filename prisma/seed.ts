@@ -55,12 +55,14 @@ async function main() {
     }
   }
 
-  for (const f of Object.values(SAMPLE_FUNDAMENTALS)) {
-    await prisma.fundamentals.upsert({
-      where: { ticker_period: { ticker: f.ticker, period: f.period } },
-      create: f,
-      update: f,
-    });
+  for (const history of Object.values(SAMPLE_FUNDAMENTALS)) {
+    for (const f of history) {
+      await prisma.fundamentals.upsert({
+        where: { ticker_period: { ticker: f.ticker, period: f.period } },
+        create: f,
+        update: f,
+      });
+    }
   }
 
   const counts = {

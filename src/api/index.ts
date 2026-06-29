@@ -1,6 +1,7 @@
 export { getAdjustedSeries } from './series';
 export { getPortfolioSeries } from './portfolio';
 export { getReportCard } from './report-card';
+export { getGrowthReport } from './growth';
 export { getScreenerRows } from './screener';
 export {
   addToWatchlist,

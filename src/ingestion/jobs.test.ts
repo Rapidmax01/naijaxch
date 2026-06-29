@@ -3,6 +3,7 @@ import type { Company, CorporateAction, Fundamentals, RawPricePoint } from '@/da
 import {
   SAMPLE_COMPANIES,
   SAMPLE_CORPORATE_ACTIONS,
+  SAMPLE_FUNDAMENTALS,
   SAMPLE_RAW_PRICES,
 } from '@/data/fixtures/sample-stocks';
 import { FixtureMarketDataSource } from './sources/fixture-source';
@@ -13,6 +14,7 @@ import type { MarketDataWriter } from './writer';
 const EXPECTED_COMPANIES = SAMPLE_COMPANIES.length;
 const EXPECTED_PRICES = Object.values(SAMPLE_RAW_PRICES).reduce((n, p) => n + p.length, 0);
 const EXPECTED_ACTIONS = Object.values(SAMPLE_CORPORATE_ACTIONS).reduce((n, a) => n + a.length, 0);
+const EXPECTED_FUNDAMENTALS = Object.values(SAMPLE_FUNDAMENTALS).reduce((n, f) => n + f.length, 0);
 
 /** In-memory writer capturing what would be persisted. */
 class FakeWriter implements MarketDataWriter {
@@ -44,11 +46,11 @@ describe('runIngestion (fixture source → fake writer)', () => {
     const writer = new FakeWriter();
     const summary = await runIngestion(new FixtureMarketDataSource(), writer);
 
-    // Every fixture company, its daily series, actions, and one fundamentals/co.
+    // Every fixture company, its daily series, actions, and full fundamentals history.
     expect(summary.companies).toBe(EXPECTED_COMPANIES);
     expect(summary.rawPrices).toBe(EXPECTED_PRICES);
     expect(summary.corporateActions).toBe(EXPECTED_ACTIONS);
-    expect(summary.fundamentals).toBe(EXPECTED_COMPANIES);
+    expect(summary.fundamentals).toBe(EXPECTED_FUNDAMENTALS);
 
     // Writer actually received the data.
     expect(writer.companies).toHaveLength(EXPECTED_COMPANIES);

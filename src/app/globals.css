@@ -912,6 +912,47 @@ button {
   font-size: 0.8rem;
   color: var(--muted);
 }
+.reportcard__growth {
+  margin: 1.1rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.reportcard__growth-title {
+  margin: 0 0 0.7rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.reportcard__growth-title span {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--faint);
+  font-family: var(--font-display);
+}
+.reportcard__growth-metrics {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+}
+.reportcard__growth-metric dt {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.reportcard__growth-metric dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.reportcard__growth-metric dd.is-up {
+  color: var(--up);
+}
+.reportcard__growth-metric dd.is-down {
+  color: var(--down);
+}
 .reportcard__locked {
   margin: 1rem 0 0;
   color: var(--muted);

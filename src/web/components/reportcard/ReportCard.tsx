@@ -7,7 +7,7 @@
  */
 
 import { formatNaira, type PriceContext } from '@/series';
-import type { ReportCard as ReportCardData } from '@/rules';
+import type { GrowthReport, ReportCard as ReportCardData } from '@/rules';
 
 const STATUS_LABEL: Record<string, string> = {
   good: 'Healthy',
@@ -41,12 +41,15 @@ export function ReportCard({
   card,
   premium = true,
   context = null,
+  growth = null,
 }: {
   card: ReportCardData;
   premium?: boolean;
   context?: PriceContext | null;
+  growth?: GrowthReport | null;
 }) {
   const metrics = premium ? card.metrics : card.metrics.slice(0, FREE_METRIC_COUNT);
+  const growthMetrics = growth?.metrics.filter((m) => m.value != null) ?? [];
 
   return (
     <section className="reportcard" aria-label="Automated report card">
@@ -120,6 +123,23 @@ export function ReportCard({
           </div>
         ))}
       </dl>
+
+      {premium && growth && growthMetrics.length > 0 && (
+        <div className="reportcard__growth">
+          <h3 className="reportcard__growth-title">
+            Growth <span>{growth.latestPeriod} vs {growth.priorPeriod ?? 'prior'}</span>
+          </h3>
+          <dl className="reportcard__growth-metrics">
+            {growthMetrics.map((m) => (
+              <div key={m.key} className="reportcard__growth-metric">
+                <dt>{m.label}</dt>
+                <dd className={m.value != null && m.value < 0 ? 'is-down' : 'is-up'}>{m.display}</dd>
+                {m.note && <p className="reportcard__note">{m.note}</p>}
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       {!premium && card.metrics.length > FREE_METRIC_COUNT && (
         <p className="reportcard__locked">

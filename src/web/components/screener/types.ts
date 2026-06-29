@@ -17,6 +17,10 @@ export interface ScreenerRow {
   dividendCover: number | null;
   /** Debt / equity (x). null if not computable. */
   debtToEquity: number | null;
+  /** Mean daily volume over the trailing 1Y window (shares). */
+  avgVolume: number | null;
+  /** True when 1Y window volume is below the "thinly traded" threshold. */
+  thinlyTraded: boolean;
 }
 
 export type SortKey =
@@ -27,7 +31,8 @@ export type SortKey =
   | 'dividendYield'
   | 'netMargin'
   | 'dividendCover'
-  | 'debtToEquity';
+  | 'debtToEquity'
+  | 'avgVolume';
 
 export interface Sort {
   key: SortKey;
@@ -48,6 +53,8 @@ export interface ScreenerFilter {
   maxDebtToEquity: number | null;
   /** Lower 1Y-change bound (%); rows without a 1Y change are excluded when set. */
   minChangePct1Y: number | null;
+  /** When true, exclude rows flagged as thinly traded. */
+  hideThinlyTraded: boolean;
   /** Free-text match on ticker or name. */
   query: string;
 }
@@ -60,6 +67,7 @@ export const DEFAULT_FILTER: ScreenerFilter = {
   minNetMargin: null,
   maxDebtToEquity: null,
   minChangePct1Y: null,
+  hideThinlyTraded: false,
   query: '',
 };
 

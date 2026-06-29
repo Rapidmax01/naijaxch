@@ -14,6 +14,8 @@ function row(ticker: string, changePct1Y: number | null): ScreenerRow {
     netMargin: null,
     dividendCover: null,
     debtToEquity: null,
+    avgVolume: null,
+    thinlyTraded: false,
   };
 }
 

@@ -8,9 +8,9 @@ import {
 } from './types';
 
 const ROWS: ScreenerRow[] = [
-  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2, debtToEquity: 0.5 },
-  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5, debtToEquity: 1.8 },
-  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null, debtToEquity: null },
+  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2, debtToEquity: 0.5, avgVolume: 120000, thinlyTraded: false },
+  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5, debtToEquity: 1.8, avgVolume: 40000, thinlyTraded: false },
+  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null, debtToEquity: null, avgVolume: 200, thinlyTraded: true },
 ];
 
 describe('filterRows', () => {
@@ -52,6 +52,14 @@ describe('filterRows', () => {
   it('minChangePct1Y excludes weaker 1Y movers', () => {
     const out = filterRows(ROWS, { ...DEFAULT_FILTER, minChangePct1Y: 0 });
     expect(out.map((r) => r.ticker)).toEqual(['AAA', 'CCC']); // BBB -3 out
+  });
+
+  it('hideThinlyTraded drops flagged rows only', () => {
+    expect(filterRows(ROWS, { ...DEFAULT_FILTER, hideThinlyTraded: true }).map((r) => r.ticker)).toEqual([
+      'AAA',
+      'BBB',
+    ]); // CCC thinly traded out
+    expect(filterRows(ROWS, { ...DEFAULT_FILTER, hideThinlyTraded: false })).toHaveLength(3);
   });
 
   it('combines filters', () => {

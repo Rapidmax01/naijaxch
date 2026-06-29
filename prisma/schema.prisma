@@ -26,6 +26,7 @@ model Company {
   corporateActions  CorporateAction[]
   fundamentals      Fundamentals[]
   aiSummaries       AiSummary[]
+  communityPosts    CommunityPost[]
 
   @@map("companies")
 }
@@ -95,6 +96,7 @@ model User {
   image         String?
   passwordHash  String?              @map("password_hash") // null for OAuth-only users
   tier          String               @default("free") // 'free' | 'premium' — billing (Step 5) flips this
+  isAdmin       Boolean              @default(false) @map("is_admin") // community moderation (0008)
   createdAt     DateTime             @default(now()) @map("created_at")
   accounts      Account[]
   sessions      Session[]
@@ -102,8 +104,44 @@ model User {
   holdings      Holding[]
   passwordResets PasswordResetToken[]
   subscription  Subscription?
+  communityPosts CommunityPost[]
+  postReports    PostReport[]
 
   @@map("users")
+}
+
+// --- Community (Step 8 — per-company discussion). UGC: G2 (opinions, not
+// advice), G4 (PII — never log bodies/identifiers). See proposal 0008. ---
+
+model CommunityPost {
+  id        String    @id @default(cuid())
+  ticker    String
+  userId    String    @map("user_id")
+  body      String    @db.VarChar(500)
+  status    String    @default("visible") // 'visible' | 'hidden' | 'removed'
+  createdAt DateTime  @default(now()) @map("created_at")
+  editedAt  DateTime? @map("edited_at")
+  company   Company   @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports   PostReport[]
+
+  @@index([ticker, createdAt])
+  @@map("community_post")
+}
+
+model PostReport {
+  id         String        @id @default(cuid())
+  postId     String        @map("post_id")
+  reporterId String        @map("reporter_id")
+  reason     String
+  status     String        @default("open") // 'open' | 'actioned' | 'dismissed'
+  createdAt  DateTime      @default(now()) @map("created_at")
+  post       CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporter   User          @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, reporterId]) // one report per user per post
+  @@index([status])
+  @@map("post_report")
 }
 
 // Mirror of the user's Paystack subscription (Step 5). The provider holds funds

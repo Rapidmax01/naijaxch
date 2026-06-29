@@ -21,6 +21,18 @@ export function filterRows(rows: ScreenerRow[], filter: ScreenerFilter): Screene
     if (filter.minDividendYield != null) {
       if (row.dividendYield == null || row.dividendYield < filter.minDividendYield) return false;
     }
+    if (filter.minDividendCover != null) {
+      if (row.dividendCover == null || row.dividendCover < filter.minDividendCover) return false;
+    }
+    if (filter.minNetMargin != null) {
+      if (row.netMargin == null || row.netMargin < filter.minNetMargin) return false;
+    }
+    if (filter.maxDebtToEquity != null) {
+      if (row.debtToEquity == null || row.debtToEquity > filter.maxDebtToEquity) return false;
+    }
+    if (filter.minChangePct1Y != null) {
+      if (row.changePct1Y == null || row.changePct1Y < filter.minChangePct1Y) return false;
+    }
     if (!matchesQuery(row, filter.query)) return false;
     return true;
   });

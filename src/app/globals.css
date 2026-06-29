@@ -910,6 +910,47 @@ button {
 }
 
 /* ============================================================ Screener */
+.screener__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+}
+.screener__preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.screener__preset:hover {
+  border-color: var(--accent);
+}
+.screener__preset.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--paper));
+  box-shadow: var(--shadow-sm);
+}
+.screener__preset-criteria {
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: none;
+}
+.screener__preset--reset {
+  justify-content: center;
+  align-self: stretch;
+  color: var(--muted);
+}
 .screener__filters {
   display: flex;
   flex-wrap: wrap;

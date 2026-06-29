@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { applyScreener, filterRows, sortRows } from './filter';
-import { DEFAULT_FILTER, type ScreenerRow } from './types';
+import {
+  DEFAULT_FILTER,
+  SCREENER_PRESETS,
+  presetToFilter,
+  type ScreenerRow,
+} from './types';
 
 const ROWS: ScreenerRow[] = [
-  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2 },
-  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5 },
-  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null },
+  { ticker: 'AAA', name: 'Alpha Bank', sector: 'Financial Services', price: 10, changePct1Y: 5, pe: 8, dividendYield: 6, netMargin: 20, dividendCover: 2, debtToEquity: 0.5 },
+  { ticker: 'BBB', name: 'Beta Cement', sector: 'Industrial Goods', price: 50, changePct1Y: -3, pe: 25, dividendYield: 2, netMargin: 15, dividendCover: 1.5, debtToEquity: 1.8 },
+  { ticker: 'CCC', name: 'Ceta Telecom', sector: 'Telecoms', price: 100, changePct1Y: 12, pe: null, dividendYield: null, netMargin: -5, dividendCover: null, debtToEquity: null },
 ];
 
 describe('filterRows', () => {
@@ -29,8 +34,51 @@ describe('filterRows', () => {
     expect(filterRows(ROWS, { ...DEFAULT_FILTER, query: 'ccc' }).map((r) => r.ticker)).toEqual(['CCC']);
   });
 
+  it('minDividendCover excludes lower-cover and null-cover rows', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, minDividendCover: 1.5 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA', 'BBB']); // CCC null cover out
+  });
+
+  it('minNetMargin excludes lower-margin rows (incl. loss-makers)', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, minNetMargin: 0 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA', 'BBB']); // CCC -5 out
+  });
+
+  it('maxDebtToEquity excludes higher-leverage and null-D/E rows', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, maxDebtToEquity: 1 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA']); // BBB 1.8 out, CCC null out
+  });
+
+  it('minChangePct1Y excludes weaker 1Y movers', () => {
+    const out = filterRows(ROWS, { ...DEFAULT_FILTER, minChangePct1Y: 0 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA', 'CCC']); // BBB -3 out
+  });
+
   it('combines filters', () => {
     const out = filterRows(ROWS, { ...DEFAULT_FILTER, sector: 'Financial Services', maxPe: 10 });
+    expect(out.map((r) => r.ticker)).toEqual(['AAA']);
+  });
+});
+
+describe('screener presets', () => {
+  it('each preset is a descriptive, non-advice filter shortcut', () => {
+    // G2: criteria are factual filter bounds, never recommendation language.
+    const banned = /\b(buy|sell|best|top pick|strong|should|recommend)\b/i;
+    for (const p of SCREENER_PRESETS) {
+      expect(p.criteria).not.toMatch(banned);
+      expect(p.label).not.toMatch(banned);
+    }
+  });
+
+  it('presetToFilter merges over defaults and applyScreener honours it', () => {
+    const highYield = SCREENER_PRESETS.find((p) => p.key === 'high-yield')!;
+    const out = applyScreener(ROWS, presetToFilter(highYield), highYield.sort);
+    expect(out.map((r) => r.ticker)).toEqual(['AAA']); // only AAA yields ≥ 5%
+  });
+
+  it('low-debt preset keeps only sub-1x D/E names, sorted ascending', () => {
+    const lowDebt = SCREENER_PRESETS.find((p) => p.key === 'low-debt')!;
+    const out = applyScreener(ROWS, presetToFilter(lowDebt), lowDebt.sort);
     expect(out.map((r) => r.ticker)).toEqual(['AAA']);
   });
 });

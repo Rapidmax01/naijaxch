@@ -22,6 +22,7 @@ export {
   type WindowStats,
 } from './window';
 export { buildPortfolioSeries, type Holding } from './portfolio';
+export { priceContext, type PriceContext } from './context';
 export {
   bollinger,
   ema,

@@ -6,6 +6,7 @@
  * page; flags use general-information phrasing only (G2).
  */
 
+import { formatNaira, type PriceContext } from '@/series';
 import type { ReportCard as ReportCardData } from '@/rules';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -17,7 +18,34 @@ const STATUS_LABEL: Record<string, string> = {
 /** Free users see a limited report card (spec §7). */
 const FREE_METRIC_COUNT = 2;
 
-export function ReportCard({ card, premium = true }: { card: ReportCardData; premium?: boolean }) {
+/** General-information sentences about where the price sits (G2 — descriptive,
+ * never advice). All figures are pre-computed in src/series (G1). */
+function contextLines(ctx: PriceContext): string[] {
+  const lines = [
+    ctx.pctBelowHigh <= 0.5
+      ? 'At its 1-year high.'
+      : `${ctx.pctBelowHigh}% below its 1-year high.`,
+    `${ctx.pctAboveLow}% above its 1-year low.`,
+  ];
+  if (ctx.vsAveragePct >= 0) {
+    lines.push(`${ctx.vsAveragePct}% above its 1-year average (${formatNaira(ctx.average)}).`);
+  } else {
+    lines.push(
+      `${Math.abs(ctx.vsAveragePct)}% below its 1-year average (${formatNaira(ctx.average)}).`,
+    );
+  }
+  return lines;
+}
+
+export function ReportCard({
+  card,
+  premium = true,
+  context = null,
+}: {
+  card: ReportCardData;
+  premium?: boolean;
+  context?: PriceContext | null;
+}) {
   const metrics = premium ? card.metrics : card.metrics.slice(0, FREE_METRIC_COUNT);
 
   return (
@@ -43,6 +71,30 @@ export function ReportCard({ card, premium = true }: { card: ReportCardData; pre
           <strong>{card.summary.watch}</strong> Watch
         </span>
       </div>
+
+      {context && (
+        <div className="reportcard__context">
+          <div className="reportcard__context-range">
+            <span className="reportcard__context-label">1-year range</span>
+            <span className="reportcard__context-band" aria-hidden>
+              <span
+                className="reportcard__context-marker"
+                style={{
+                  left: `${Math.max(0, Math.min(100, context.pctAboveLow === 0 && context.pctBelowHigh === 0 ? 50 : (context.latest - context.low) / Math.max(context.high - context.low, 1e-9) * 100))}%`,
+                }}
+              />
+            </span>
+            <span className="reportcard__context-ends">
+              {formatNaira(context.low)} – {formatNaira(context.high)}
+            </span>
+          </div>
+          <ul className="reportcard__context-notes">
+            {contextLines(context).map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {premium && card.flags.length > 0 && (
         <ul className="reportcard__flags">

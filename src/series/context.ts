@@ -27,6 +27,20 @@ export interface PriceContext {
   vsAveragePct: number;
 }
 
+/**
+ * Adjusted close as of `isoDate` — the latest point on or before that date, or
+ * null if the series starts after it. Points are ascending by date. Used to pair
+ * a fiscal period-end with a price (proposal 0006 Phase B). adjClose only (G6).
+ */
+export function priceOnOrBefore(series: PriceSeries, isoDate: string): number | null {
+  let found: number | null = null;
+  for (const p of series.points) {
+    if (p.date <= isoDate) found = p.adjClose;
+    else break;
+  }
+  return found;
+}
+
 export function priceContext(series: PriceSeries, timeframe: Timeframe = '1Y'): PriceContext | null {
   const pts = windowSeries(series, timeframe).points;
   if (pts.length === 0) return null;

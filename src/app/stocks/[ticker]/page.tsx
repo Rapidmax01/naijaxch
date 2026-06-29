@@ -1,6 +1,12 @@
 import { notFound } from 'next/navigation';
 import { dataStore } from '@/data';
-import { getAdjustedSeries, getGrowthReport, getReportCard, getStoredSummary } from '@/api';
+import {
+  getAdjustedSeries,
+  getGrowthReport,
+  getPeHistory,
+  getReportCard,
+  getStoredSummary,
+} from '@/api';
 import { priceContext } from '@/series';
 import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
@@ -16,15 +22,17 @@ import { sectorColor, sectorWash } from '@/web/lib/sectors';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [company, series, reportCard, growth, actions, aiSummary, premium] = await Promise.all([
-    dataStore.getCompany(ticker),
-    getAdjustedSeries(ticker),
-    getReportCard(ticker),
-    getGrowthReport(ticker),
-    dataStore.getCorporateActions(ticker),
-    getStoredSummary(ticker),
-    isPremium(),
-  ]);
+  const [company, series, reportCard, growth, valuation, actions, aiSummary, premium] =
+    await Promise.all([
+      dataStore.getCompany(ticker),
+      getAdjustedSeries(ticker),
+      getReportCard(ticker),
+      getGrowthReport(ticker),
+      getPeHistory(ticker),
+      dataStore.getCorporateActions(ticker),
+      getStoredSummary(ticker),
+      isPremium(),
+    ]);
 
   if (!company || !series) notFound();
 
@@ -67,6 +75,7 @@ export default async function StockPage({ params }: { params: { ticker: string }
           premium={premium}
           context={priceContext(series, '1Y')}
           growth={growth}
+          valuation={valuation}
         />
       )}
 

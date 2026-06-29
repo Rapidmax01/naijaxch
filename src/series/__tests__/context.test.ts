@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PriceSeries } from '../types';
-import { priceContext } from '../context';
+import { priceContext, priceOnOrBefore } from '../context';
 
 function series(closes: number[]): PriceSeries {
   return {
@@ -44,5 +44,23 @@ describe('priceContext', () => {
 
   it('returns null for an empty series', () => {
     expect(priceContext(series([]))).toBeNull();
+  });
+});
+
+describe('priceOnOrBefore', () => {
+  // series() dates the points 2024-01-01, -02, -03…
+  const s = series([10, 20, 30]);
+
+  it('returns the latest close on or before the date', () => {
+    expect(priceOnOrBefore(s, '2024-01-02')).toBe(20);
+    expect(priceOnOrBefore(s, '2024-01-03')).toBe(30);
+  });
+
+  it('returns the last point when the date is after the series', () => {
+    expect(priceOnOrBefore(s, '2024-12-31')).toBe(30);
+  });
+
+  it('is null when the series starts after the date', () => {
+    expect(priceOnOrBefore(s, '2023-12-31')).toBeNull();
   });
 });

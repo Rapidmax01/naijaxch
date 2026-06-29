@@ -7,7 +7,7 @@
  */
 
 import { formatNaira, type PriceContext } from '@/series';
-import type { GrowthReport, ReportCard as ReportCardData } from '@/rules';
+import type { GrowthReport, PeHistory, ReportCard as ReportCardData } from '@/rules';
 
 const STATUS_LABEL: Record<string, string> = {
   good: 'Healthy',
@@ -42,11 +42,13 @@ export function ReportCard({
   premium = true,
   context = null,
   growth = null,
+  valuation = null,
 }: {
   card: ReportCardData;
   premium?: boolean;
   context?: PriceContext | null;
   growth?: GrowthReport | null;
+  valuation?: PeHistory | null;
 }) {
   const metrics = premium ? card.metrics : card.metrics.slice(0, FREE_METRIC_COUNT);
   const growthMetrics = growth?.metrics.filter((m) => m.value != null) ?? [];
@@ -139,6 +141,12 @@ export function ReportCard({
             ))}
           </dl>
         </div>
+      )}
+
+      {premium && valuation?.note && (
+        <p className="reportcard__valuation" role="note">
+          {valuation.note}
+        </p>
       )}
 
       {!premium && card.metrics.length > FREE_METRIC_COUNT && (

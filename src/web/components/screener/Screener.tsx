@@ -12,7 +12,10 @@ import { sectorColor } from '@/web/lib/sectors';
 import { applyScreener } from './filter';
 import {
   DEFAULT_FILTER,
+  SCREENER_PRESETS,
+  presetToFilter,
   type ScreenerFilter,
+  type ScreenerPreset,
   type ScreenerRow,
   type Sort,
   type SortKey,
@@ -26,6 +29,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: 'dividendYield', label: 'Yield', numeric: true },
   { key: 'netMargin', label: 'Margin', numeric: true },
   { key: 'dividendCover', label: 'Cover', numeric: true },
+  { key: 'debtToEquity', label: 'D/E', numeric: true },
 ];
 
 function cell(key: SortKey, row: ScreenerRow): string {
@@ -44,6 +48,8 @@ function cell(key: SortKey, row: ScreenerRow): string {
       return row.netMargin == null ? '—' : `${row.netMargin}%`;
     case 'dividendCover':
       return row.dividendCover == null ? '—' : `${row.dividendCover}x`;
+    case 'debtToEquity':
+      return row.debtToEquity == null ? '—' : `${row.debtToEquity}x`;
   }
 }
 
@@ -53,6 +59,7 @@ const FREE_ROW_COUNT = 4;
 export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premium?: boolean }) {
   const [filter, setFilter] = useState<ScreenerFilter>(DEFAULT_FILTER);
   const [sort, setSort] = useState<Sort>({ key: 'changePct1Y', dir: 'desc' });
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const sectors = useMemo(
     () => ['all', ...Array.from(new Set(rows.map((r) => r.sector))).sort()],
@@ -60,7 +67,30 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
   );
   const visible = useMemo(() => applyScreener(rows, filter, sort), [rows, filter, sort]);
 
+  // Manual filter edits clear the active preset (the filter no longer matches it).
+  function editFilter(patch: Partial<ScreenerFilter>) {
+    setFilter((f) => ({ ...f, ...patch }));
+    setActivePreset(null);
+  }
+
+  function applyPreset(preset: ScreenerPreset) {
+    if (activePreset === preset.key) {
+      setFilter(DEFAULT_FILTER);
+      setActivePreset(null);
+      return;
+    }
+    setFilter(presetToFilter(preset));
+    setSort(preset.sort);
+    setActivePreset(preset.key);
+  }
+
+  function reset() {
+    setFilter(DEFAULT_FILTER);
+    setActivePreset(null);
+  }
+
   function toggleSort(key: SortKey) {
+    setActivePreset(null);
     setSort((prev) =>
       prev.key === key
         ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
@@ -77,6 +107,25 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
 
   return (
     <div className="screener">
+      <div className="screener__presets" role="group" aria-label="Quick screens">
+        {SCREENER_PRESETS.map((p) => (
+          <button
+            key={p.key}
+            type="button"
+            className={`screener__preset${activePreset === p.key ? ' is-active' : ''}`}
+            aria-pressed={activePreset === p.key}
+            title={p.criteria}
+            onClick={() => applyPreset(p)}
+          >
+            {p.label}
+            <span className="screener__preset-criteria">{p.criteria}</span>
+          </button>
+        ))}
+        <button type="button" className="screener__preset screener__preset--reset" onClick={reset}>
+          Reset
+        </button>
+      </div>
+
       <div className="screener__filters">
         <label className="screener__field">
           <span>Search</span>
@@ -84,15 +133,12 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
             type="search"
             placeholder="Ticker or name"
             value={filter.query}
-            onChange={(e) => setFilter((f) => ({ ...f, query: e.target.value }))}
+            onChange={(e) => editFilter({ query: e.target.value })}
           />
         </label>
         <label className="screener__field">
           <span>Sector</span>
-          <select
-            value={filter.sector}
-            onChange={(e) => setFilter((f) => ({ ...f, sector: e.target.value }))}
-          >
+          <select value={filter.sector} onChange={(e) => editFilter({ sector: e.target.value })}>
             {sectors.map((s) => (
               <option key={s} value={s}>
                 {s === 'all' ? 'All sectors' : s}
@@ -107,7 +153,7 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
             min={0}
             placeholder="—"
             value={filter.maxPe ?? ''}
-            onChange={(e) => setFilter((f) => ({ ...f, maxPe: numberOrNull(e.target.value) }))}
+            onChange={(e) => editFilter({ maxPe: numberOrNull(e.target.value) })}
           />
         </label>
         <label className="screener__field">
@@ -117,9 +163,47 @@ export function Screener({ rows, premium = true }: { rows: ScreenerRow[]; premiu
             min={0}
             placeholder="—"
             value={filter.minDividendYield ?? ''}
-            onChange={(e) =>
-              setFilter((f) => ({ ...f, minDividendYield: numberOrNull(e.target.value) }))
-            }
+            onChange={(e) => editFilter({ minDividendYield: numberOrNull(e.target.value) })}
+          />
+        </label>
+        <label className="screener__field">
+          <span>Min cover x</span>
+          <input
+            type="number"
+            min={0}
+            step={0.1}
+            placeholder="—"
+            value={filter.minDividendCover ?? ''}
+            onChange={(e) => editFilter({ minDividendCover: numberOrNull(e.target.value) })}
+          />
+        </label>
+        <label className="screener__field">
+          <span>Min margin %</span>
+          <input
+            type="number"
+            placeholder="—"
+            value={filter.minNetMargin ?? ''}
+            onChange={(e) => editFilter({ minNetMargin: numberOrNull(e.target.value) })}
+          />
+        </label>
+        <label className="screener__field">
+          <span>Max D/E x</span>
+          <input
+            type="number"
+            min={0}
+            step={0.1}
+            placeholder="—"
+            value={filter.maxDebtToEquity ?? ''}
+            onChange={(e) => editFilter({ maxDebtToEquity: numberOrNull(e.target.value) })}
+          />
+        </label>
+        <label className="screener__field">
+          <span>Min 1Y %</span>
+          <input
+            type="number"
+            placeholder="—"
+            value={filter.minChangePct1Y ?? ''}
+            onChange={(e) => editFilter({ minChangePct1Y: numberOrNull(e.target.value) })}
           />
         </label>
       </div>

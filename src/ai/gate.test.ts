@@ -34,8 +34,23 @@ describe('hasAdviceLanguage', () => {
     expect(hasAdviceLanguage('We recommend this stock')).toBe(true);
     expect(hasAdviceLanguage('a strong buy')).toBe(true);
   });
+  it('flags valuation-judgment language (0007 — G2)', () => {
+    expect(hasAdviceLanguage('The stock looks undervalued')).toBe(true);
+    expect(hasAdviceLanguage('shares are overvalued')).toBe(true);
+    expect(hasAdviceLanguage('it trades cheap')).toBe(true);
+    expect(hasAdviceLanguage('an expensive valuation')).toBe(true);
+    expect(hasAdviceLanguage('a bargain at this price')).toBe(true);
+    expect(hasAdviceLanguage('an attractive entry')).toBe(true);
+    expect(hasAdviceLanguage('a buying opportunity')).toBe(true);
+    expect(hasAdviceLanguage('the shares look mispriced')).toBe(true);
+  });
   it('allows neutral information phrasing', () => {
     expect(hasAdviceLanguage('The data shows dividend cover at {{dividendCover}}.')).toBe(false);
+    // The controlled valuation sentence is neutral and must pass.
+    expect(hasAdviceLanguage('It trades about 35% below its 5-year average P/E.')).toBe(false);
+    expect(
+      hasAdviceLanguage('Revenue grew year-on-year and return on equity was {{roe}}.'),
+    ).toBe(false);
   });
 });
 
@@ -59,6 +74,12 @@ describe('validateNarration', () => {
 
   it('rejects advice language (G2)', () => {
     const r = validateNarration('Investors should buy {{company}}', KEYS);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('G2');
+  });
+
+  it('rejects a planted valuation judgment (0007 — G2)', () => {
+    const r = validateNarration('{{company}} looks undervalued versus peers', KEYS);
     expect(r.ok).toBe(false);
     expect(r.reason).toContain('G2');
   });

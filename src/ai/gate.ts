@@ -16,6 +16,14 @@ const ADVICE_PATTERNS: RegExp[] = [
   /\binvest in\b/i,
   /\bright for (you|your)\b/i,
   /\bshould (buy|sell|invest|consider)\b/i,
+  // Valuation judgments (G2) — added for the growth/valuation context (0007).
+  // The model must describe figures, never characterise them as cheap/dear.
+  /\b(under|over)valued\b/i,
+  /\bmispriced\b/i,
+  /\b(cheap|expensive)\b/i,
+  /\bbargain\b/i,
+  /\battractive(ly)?\b/i,
+  /\bopportunity\b/i,
 ];
 
 /** Unique placeholder keys used in the text. */

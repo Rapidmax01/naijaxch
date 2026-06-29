@@ -27,7 +27,6 @@ export class FixtureMarketDataSource implements MarketDataSource {
   }
 
   async fetchFundamentals(ticker: Ticker): Promise<Fundamentals[]> {
-    const f = SAMPLE_FUNDAMENTALS[ticker];
-    return f ? [f] : [];
+    return SAMPLE_FUNDAMENTALS[ticker] ?? [];
   }
 }

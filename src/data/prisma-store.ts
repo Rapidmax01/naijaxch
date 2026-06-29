@@ -39,6 +39,29 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Prisma fundamentals row → domain Fundamentals (Decimal → number at the boundary). */
+function mapFundamentals(f: {
+  ticker: string;
+  period: string;
+  revenue: { toNumber(): number };
+  netIncome: { toNumber(): number };
+  shareCount: { toNumber(): number };
+  dividendPerShare: { toNumber(): number };
+  totalEquity: { toNumber(): number };
+  totalDebt: { toNumber(): number };
+}): Fundamentals {
+  return {
+    ticker: f.ticker,
+    period: f.period,
+    revenue: f.revenue.toNumber(),
+    netIncome: f.netIncome.toNumber(),
+    shareCount: f.shareCount.toNumber(),
+    dividendPerShare: f.dividendPerShare.toNumber(),
+    totalEquity: f.totalEquity.toNumber(),
+    totalDebt: f.totalDebt.toNumber(),
+  };
+}
+
 export class PrismaSourceOfTruth implements SourceOfTruth {
   async listCompanies(): Promise<SampleCompany[]> {
     const rows = await client().company.findMany({ orderBy: { ticker: 'asc' } });
@@ -84,17 +107,15 @@ export class PrismaSourceOfTruth implements SourceOfTruth {
       where: { ticker },
       orderBy: { period: 'desc' },
     });
-    if (!f) return null;
-    return {
-      ticker: f.ticker,
-      period: f.period,
-      revenue: f.revenue.toNumber(),
-      netIncome: f.netIncome.toNumber(),
-      shareCount: f.shareCount.toNumber(),
-      dividendPerShare: f.dividendPerShare.toNumber(),
-      totalEquity: f.totalEquity.toNumber(),
-      totalDebt: f.totalDebt.toNumber(),
-    };
+    return f ? mapFundamentals(f) : null;
+  }
+
+  async getFundamentalsHistory(ticker: Ticker): Promise<Fundamentals[]> {
+    const rows = await client().fundamentals.findMany({
+      where: { ticker },
+      orderBy: { period: 'asc' },
+    });
+    return rows.map(mapFundamentals);
   }
 
   async getQuote(ticker: Ticker): Promise<DelayedQuote | null> {

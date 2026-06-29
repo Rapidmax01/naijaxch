@@ -30,6 +30,8 @@ export interface SourceOfTruth {
   getRawPrices(ticker: Ticker): Promise<RawPricePoint[]>;
   getCorporateActions(ticker: Ticker): Promise<CorporateAction[]>;
   getFundamentals(ticker: Ticker): Promise<Fundamentals | null>;
+  /** Reporting-period history, ascending by period (for growth metrics). */
+  getFundamentalsHistory(ticker: Ticker): Promise<Fundamentals[]>;
   /** Latest delayed/EOD quote for the company-page badge (display-only; TS2). */
   getQuote(ticker: Ticker): Promise<DelayedQuote | null>;
 }
@@ -52,7 +54,11 @@ class InMemorySourceOfTruth implements SourceOfTruth {
   }
 
   async getFundamentals(ticker: Ticker): Promise<Fundamentals | null> {
-    return SAMPLE_FUNDAMENTALS[ticker] ?? null;
+    return SAMPLE_FUNDAMENTALS[ticker]?.at(-1) ?? null;
+  }
+
+  async getFundamentalsHistory(ticker: Ticker): Promise<Fundamentals[]> {
+    return SAMPLE_FUNDAMENTALS[ticker] ?? [];
   }
 
   async getQuote(ticker: Ticker): Promise<DelayedQuote | null> {

@@ -205,32 +205,67 @@ function genFundamentals(s: Seed, h: number): Fundamentals {
   };
 }
 
-export const SAMPLE_FUNDAMENTALS: Record<Ticker, Fundamentals> = {};
-for (const s of SEEDS) SAMPLE_FUNDAMENTALS[s.ticker] = genFundamentals(s, hash(s.ticker));
+/**
+ * Build a 5-year history (FY2019…FY2023) ending exactly at `anchor` (the latest
+ * period — so existing report-card stories are unchanged). Older years are the
+ * anchor deflated by a deterministic annual growth rate, giving a realistic
+ * upward trend for the growth metrics (proposal 0006). Ascending order.
+ */
+function backcast(anchor: Fundamentals, h: number): Fundamentals[] {
+  const years = [2019, 2020, 2021, 2022, 2023];
+  const growth = 1 + ((h % 15) + 3) / 100; // 3%–17% annual growth
+  const n = years.length;
+  return years.map((y, i) => {
+    const factor = Math.pow(growth, -(n - 1 - i)); // 1 for the latest year
+    return {
+      ticker: anchor.ticker,
+      period: `FY${y}`,
+      revenue: Math.round(anchor.revenue * factor),
+      netIncome: Math.round(anchor.netIncome * factor),
+      shareCount: anchor.shareCount, // held constant (placeholder)
+      dividendPerShare: round2(anchor.dividendPerShare * factor),
+      totalEquity: Math.round(anchor.totalEquity * factor),
+      totalDebt: Math.round(anchor.totalDebt * factor),
+    };
+  });
+}
 
-// Hand-set a few cases so the demos always show specific report-card stories:
+export const SAMPLE_FUNDAMENTALS: Record<Ticker, Fundamentals[]> = {};
+for (const s of SEEDS) {
+  const h = hash(s.ticker);
+  SAMPLE_FUNDAMENTALS[s.ticker] = backcast(genFundamentals(s, h), h);
+}
+
+// Hand-set a few latest-period anchors so the demos always show specific
+// report-card stories; each gets the same back-cast 5-year history.
 // GTCO — dividend cover below 1 (declared dividend exceeds EPS).
-SAMPLE_FUNDAMENTALS.GTCO = {
-  ticker: 'GTCO',
-  period: 'FY2023',
-  revenue: 1_186_000_000_000,
-  netIncome: 539_000_000_000,
-  shareCount: 29_430_000_000,
-  dividendPerShare: 20, // EPS ≈ ₦18.31 → cover ≈ 0.92 (watch)
-  totalEquity: 1_500_000_000_000,
-  totalDebt: 400_000_000_000,
-};
+SAMPLE_FUNDAMENTALS.GTCO = backcast(
+  {
+    ticker: 'GTCO',
+    period: 'FY2023',
+    revenue: 1_186_000_000_000,
+    netIncome: 539_000_000_000,
+    shareCount: 29_430_000_000,
+    dividendPerShare: 20, // EPS ≈ ₦18.31 → cover ≈ 0.92 (watch)
+    totalEquity: 1_500_000_000_000,
+    totalDebt: 400_000_000_000,
+  },
+  hash('GTCO'),
+);
 // MTNN — a loss-making period with negative equity.
-SAMPLE_FUNDAMENTALS.MTNN = {
-  ticker: 'MTNN',
-  period: 'FY2023',
-  revenue: 2_470_000_000_000,
-  netIncome: -137_000_000_000,
-  shareCount: 20_350_000_000,
-  dividendPerShare: 0,
-  totalEquity: -40_000_000_000,
-  totalDebt: 1_100_000_000_000,
-};
+SAMPLE_FUNDAMENTALS.MTNN = backcast(
+  {
+    ticker: 'MTNN',
+    period: 'FY2023',
+    revenue: 2_470_000_000_000,
+    netIncome: -137_000_000_000,
+    shareCount: 20_350_000_000,
+    dividendPerShare: 0,
+    totalEquity: -40_000_000_000,
+    totalDebt: 1_100_000_000_000,
+  },
+  hash('MTNN'),
+);
 
 // --- Corporate actions (with the matching raw ex-date step-down so the
 // adjusted series stays continuous, G6). Bonus/split: factor = M/(M+N).

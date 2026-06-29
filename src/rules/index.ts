@@ -11,4 +11,5 @@ export {
   type Metric,
   type MetricStatus,
   type ReportCard,
+  type ReportCardSummary,
 } from './report-card';

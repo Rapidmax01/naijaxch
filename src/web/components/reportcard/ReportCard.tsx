@@ -27,6 +27,23 @@ export function ReportCard({ card, premium = true }: { card: ReportCardData; pre
         <span className="reportcard__period">{card.period}</span>
       </header>
 
+      {/* Factual status tally — general information, not a grade or advice (G2). */}
+      <div
+        className="reportcard__summary"
+        role="img"
+        aria-label={`${card.summary.good} healthy, ${card.summary.neutral} informational, ${card.summary.watch} watch readings`}
+      >
+        <span className="reportcard__sum reportcard__sum--good">
+          <strong>{card.summary.good}</strong> Healthy
+        </span>
+        <span className="reportcard__sum reportcard__sum--neutral">
+          <strong>{card.summary.neutral}</strong> Info
+        </span>
+        <span className="reportcard__sum reportcard__sum--watch">
+          <strong>{card.summary.watch}</strong> Watch
+        </span>
+      </div>
+
       {premium && card.flags.length > 0 && (
         <ul className="reportcard__flags">
           {card.flags.map((flag, i) => (

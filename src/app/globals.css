@@ -917,6 +917,49 @@ button {
   color: var(--muted);
   font-size: 0.875rem;
 }
+.sector-context {
+  margin: 1.5rem 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.1rem 1.25rem;
+}
+.sector-context--loading {
+  height: 6.5rem;
+  background: linear-gradient(90deg, var(--paper-2), var(--line), var(--paper-2));
+  background-size: 200% 100%;
+  animation: quote-shimmer 1.2s ease-in-out infinite;
+}
+.sector-context__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.sector-context__title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.sector-context__peers {
+  color: var(--faint);
+  font-size: 0.78rem;
+  font-family: var(--font-display);
+}
+.sector-context__list {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+.sector-context__note {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
 
 /* ============================================================ AI summary */
 .ai-summary {

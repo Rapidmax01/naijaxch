@@ -19,3 +19,4 @@ export {
   type GrowthMetric,
   type GrowthReport,
 } from './growth';
+export { peHistory, type PeHistory, type PeInput, type PePoint } from './valuation';

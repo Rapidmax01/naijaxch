@@ -13,3 +13,4 @@ export {
   type ReportCard,
   type ReportCardSummary,
 } from './report-card';
+export { median, sectorPosition, type SectorPosition } from './sector';

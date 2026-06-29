@@ -7,6 +7,7 @@ import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
 import { DelayedQuoteBadge } from '@/web/components/company/DelayedQuoteBadge';
+import { SectorContext } from '@/web/components/company/SectorContext';
 import { WatchButton } from '@/web/components/watchlist/WatchButton';
 import { UpgradePrompt } from '@/web/components/billing/UpgradePrompt';
 import { Disclaimer } from '@/web/components/common/Disclaimer';
@@ -62,6 +63,8 @@ export default async function StockPage({ params }: { params: { ticker: string }
       {reportCard && (
         <ReportCard card={reportCard} premium={premium} context={priceContext(series, '1Y')} />
       )}
+
+      <SectorContext ticker={company.ticker} />
 
       <CorporateActions actions={actions} />
 

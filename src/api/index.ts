@@ -11,6 +11,17 @@ export {
   removeFromWatchlist,
 } from './watchlist';
 export { getHoldings, replaceHoldings, type AccountHolding } from './holdings';
+export {
+  communityEnabled,
+  createPost,
+  deleteOwnPost,
+  getPosterGate,
+  isAdminUser,
+  listPosts,
+  reportPost,
+  setPostStatus,
+  type CommunityPost,
+} from './community';
 export { getStoredSummary, type StoredSummary } from './ai';
 export { getDelayedQuote } from './quote';
 export {

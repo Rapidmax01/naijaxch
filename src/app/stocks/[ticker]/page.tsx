@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { dataStore } from '@/data';
 import {
+  communityEnabled,
   getAdjustedSeries,
   getGrowthReport,
   getPeHistory,
@@ -11,6 +12,7 @@ import { priceContext } from '@/series';
 import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
+import { CommunityThread } from '@/web/components/community/CommunityThread';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
 import { DelayedQuoteBadge } from '@/web/components/company/DelayedQuoteBadge';
 import { SectorContext } from '@/web/components/company/SectorContext';
@@ -82,6 +84,8 @@ export default async function StockPage({ params }: { params: { ticker: string }
       <SectorContext ticker={company.ticker} />
 
       <CorporateActions actions={actions} />
+
+      {communityEnabled() && <CommunityThread ticker={company.ticker} company={company.name} />}
 
       <Disclaimer />
     </div>

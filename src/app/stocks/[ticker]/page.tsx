@@ -3,6 +3,7 @@ import { dataStore } from '@/data';
 import {
   communityEnabled,
   getAdjustedSeries,
+  getDisclosures,
   getGrowthReport,
   getPeHistory,
   getReportCard,
@@ -13,6 +14,7 @@ import { TrendChart } from '@/web/components/TrendChart';
 import { ReportCard } from '@/web/components/reportcard/ReportCard';
 import { AiSummary } from '@/web/components/ai/AiSummary';
 import { CommunityThread } from '@/web/components/community/CommunityThread';
+import { CompanyFilings } from '@/web/components/company/CompanyFilings';
 import { CorporateActions } from '@/web/components/company/CorporateActions';
 import { DelayedQuoteBadge } from '@/web/components/company/DelayedQuoteBadge';
 import { SectorContext } from '@/web/components/company/SectorContext';
@@ -24,7 +26,7 @@ import { sectorColor, sectorWash } from '@/web/lib/sectors';
 
 export default async function StockPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [company, series, reportCard, growth, valuation, actions, aiSummary, premium] =
+  const [company, series, reportCard, growth, valuation, actions, disclosures, aiSummary, premium] =
     await Promise.all([
       dataStore.getCompany(ticker),
       getAdjustedSeries(ticker),
@@ -32,6 +34,7 @@ export default async function StockPage({ params }: { params: { ticker: string }
       getGrowthReport(ticker),
       getPeHistory(ticker),
       dataStore.getCorporateActions(ticker),
+      getDisclosures(ticker),
       getStoredSummary(ticker),
       isPremium(),
     ]);
@@ -84,6 +87,8 @@ export default async function StockPage({ params }: { params: { ticker: string }
       <SectorContext ticker={company.ticker} />
 
       <CorporateActions actions={actions} />
+
+      <CompanyFilings disclosures={disclosures} />
 
       {communityEnabled() && <CommunityThread ticker={company.ticker} company={company.name} />}
 

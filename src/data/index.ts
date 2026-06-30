@@ -5,6 +5,8 @@ export type {
   CorporateActionTerms,
   CorporateActionType,
   DelayedQuote,
+  Disclosure,
+  DisclosureType,
   Fundamentals,
   RawPricePoint,
   RightsTerms,

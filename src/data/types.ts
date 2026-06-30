@@ -34,6 +34,29 @@ export interface RawPricePoint {
   volume: number;
 }
 
+export type DisclosureType =
+  | 'results'
+  | 'dividend'
+  | 'board'
+  | 'material-event'
+  | 'corporate-action'
+  | 'other';
+
+/**
+ * An official NGX company disclosure / filing (proposal 0009). Shown in full as
+ * a regulatory filing with attribution. Qualitative context — never mixed into
+ * the computed panels (G1) or the AI grounding (#4).
+ */
+export interface Disclosure {
+  ticker: Ticker;
+  title: string;
+  type: DisclosureType;
+  /** ISO timestamp the filing was published. */
+  publishedAt: string;
+  /** Link to the official NGX filing / PDF (we link out; never re-host). */
+  sourceUrl: string;
+}
+
 /**
  * A delayed (or end-of-day) last-trade quote for the company-page badge.
  *

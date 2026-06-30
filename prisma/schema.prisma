@@ -27,8 +27,27 @@ model Company {
   fundamentals      Fundamentals[]
   aiSummaries       AiSummary[]
   communityPosts    CommunityPost[]
+  disclosures       Disclosure[]
 
   @@map("companies")
+}
+
+// Official NGX company disclosures / filings (proposal 0009). Shown in full as
+// regulatory filings (with attribution); qualitative context, kept out of the
+// computed panels (G1) and the AI grounding (#4).
+model Disclosure {
+  id          String   @id @default(cuid())
+  ticker      String
+  title       String
+  type        String   // results | dividend | board | material-event | corporate-action | other
+  publishedAt DateTime @map("published_at")
+  sourceUrl   String   @map("source_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  company     Company  @relation(fields: [ticker], references: [ticker], onDelete: Cascade)
+
+  @@unique([ticker, sourceUrl])
+  @@index([ticker, publishedAt])
+  @@map("disclosure")
 }
 
 // Cached AI summary per company (generate once per filing — never on page load).

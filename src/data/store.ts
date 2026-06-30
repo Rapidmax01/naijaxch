@@ -10,6 +10,7 @@
 import type {
   CorporateAction,
   DelayedQuote,
+  Disclosure,
   Fundamentals,
   RawPricePoint,
   Ticker,
@@ -18,6 +19,7 @@ import { buildDelayedQuote, configuredDelayMinutes } from './quote';
 import {
   SAMPLE_COMPANIES,
   SAMPLE_CORPORATE_ACTIONS,
+  SAMPLE_DISCLOSURES,
   SAMPLE_FUNDAMENTALS,
   SAMPLE_RAW_PRICES,
   type SampleCompany,
@@ -34,6 +36,8 @@ export interface SourceOfTruth {
   getFundamentalsHistory(ticker: Ticker): Promise<Fundamentals[]>;
   /** Latest delayed/EOD quote for the company-page badge (display-only; TS2). */
   getQuote(ticker: Ticker): Promise<DelayedQuote | null>;
+  /** Official NGX disclosures for a ticker, newest first (proposal 0009). */
+  getDisclosures(ticker: Ticker): Promise<Disclosure[]>;
 }
 
 class InMemorySourceOfTruth implements SourceOfTruth {
@@ -73,6 +77,10 @@ class InMemorySourceOfTruth implements SourceOfTruth {
       asOf: last.date,
       delayMinutes: configuredDelayMinutes(),
     });
+  }
+
+  async getDisclosures(ticker: Ticker): Promise<Disclosure[]> {
+    return SAMPLE_DISCLOSURES[ticker] ?? [];
   }
 }
 

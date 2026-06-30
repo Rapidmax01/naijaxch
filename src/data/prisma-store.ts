@@ -15,6 +15,8 @@ import type {
   CorporateAction,
   CorporateActionType,
   DelayedQuote,
+  Disclosure,
+  DisclosureType,
   Fundamentals,
   RawPricePoint,
   Ticker,
@@ -134,5 +136,20 @@ export class PrismaSourceOfTruth implements SourceOfTruth {
       asOf: isoDate(last.date),
       delayMinutes: configuredDelayMinutes(),
     });
+  }
+
+  async getDisclosures(ticker: Ticker): Promise<Disclosure[]> {
+    const rows = await client().disclosure.findMany({
+      where: { ticker },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((d) => ({
+      ticker: d.ticker,
+      title: d.title,
+      type: d.type as DisclosureType,
+      publishedAt: d.publishedAt.toISOString(),
+      sourceUrl: d.sourceUrl,
+    }));
   }
 }

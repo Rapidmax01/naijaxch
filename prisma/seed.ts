@@ -11,6 +11,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import {
   SAMPLE_COMPANIES,
   SAMPLE_CORPORATE_ACTIONS,
+  SAMPLE_DISCLOSURES,
   SAMPLE_FUNDAMENTALS,
   SAMPLE_RAW_PRICES,
 } from '../src/data/fixtures/sample-stocks';
@@ -65,11 +66,22 @@ async function main() {
     }
   }
 
+  for (const items of Object.values(SAMPLE_DISCLOSURES)) {
+    for (const d of items) {
+      await prisma.disclosure.upsert({
+        where: { ticker_sourceUrl: { ticker: d.ticker, sourceUrl: d.sourceUrl } },
+        create: { ...d, publishedAt: new Date(d.publishedAt) },
+        update: { title: d.title, type: d.type, publishedAt: new Date(d.publishedAt) },
+      });
+    }
+  }
+
   const counts = {
     companies: await prisma.company.count(),
     rawPrices: await prisma.rawPrice.count(),
     corporateActions: await prisma.corporateAction.count(),
     fundamentals: await prisma.fundamentals.count(),
+    disclosures: await prisma.disclosure.count(),
   };
   console.log('Seed complete:', counts);
 }

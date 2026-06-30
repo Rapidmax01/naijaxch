@@ -9,7 +9,15 @@
  * feed via src/ingestion (NgxMarketDataSource) for real data.
  */
 
-import type { Company, CorporateAction, Fundamentals, RawPricePoint, Ticker } from '../types';
+import type {
+  Company,
+  CorporateAction,
+  Disclosure,
+  DisclosureType,
+  Fundamentals,
+  RawPricePoint,
+  Ticker,
+} from '../types';
 
 /** @deprecated use `Company` from `@/data/types` — kept for existing imports. */
 export type SampleCompany = Company;
@@ -312,3 +320,39 @@ export const SAMPLE_CORPORATE_ACTIONS: Record<Ticker, CorporateAction[]> = {
   BUACEMENT: [applyBonusOrSplit('BUACEMENT', DAYS[90]!, 'bonus', 1, 5)],
   DANGSUGAR: [applyRights('DANGSUGAR', DAYS[170]!, 1, 4, 0.7)],
 };
+
+// --- Company disclosures / filings (proposal 0009). Deterministic placeholders
+// standing in for the licensed NGX disclosure feed (G3/#6). Newest-first.
+function mkDisclosure(
+  ticker: Ticker,
+  type: DisclosureType,
+  title: string,
+  date: string,
+): Disclosure {
+  return {
+    ticker,
+    title,
+    type,
+    publishedAt: `${date}T09:00:00.000Z`,
+    sourceUrl: `https://ngxgroup.com/issuers/${ticker.toLowerCase()}/disclosures/${type}-${date}`,
+  };
+}
+
+export const SAMPLE_DISCLOSURES: Record<Ticker, Disclosure[]> = {};
+for (const s of SEEDS) {
+  const h = hash(s.ticker);
+  const items: Disclosure[] = [
+    mkDisclosure(s.ticker, 'results', 'Audited Full-Year Results FY2023', '2024-03-12'),
+    mkDisclosure(s.ticker, 'dividend', 'Notice of Dividend Declaration', '2024-03-14'),
+  ];
+  if (h % 2 === 0) {
+    items.push(mkDisclosure(s.ticker, 'board', 'Change to the Board of Directors', '2024-01-22'));
+  }
+  if (h % 3 === 0) {
+    items.push(
+      mkDisclosure(s.ticker, 'material-event', 'Notification of a Material Development', '2024-06-05'),
+    );
+  }
+  items.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)); // newest first
+  SAMPLE_DISCLOSURES[s.ticker] = items;
+}

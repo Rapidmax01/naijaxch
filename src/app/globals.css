@@ -2033,3 +2033,49 @@ button {
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* ============================================================ Moderation */
+.admin-page {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.modqueue {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+.modqueue__item {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+.modqueue__meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+.modqueue__reason {
+  font-weight: 700;
+  color: var(--down);
+}
+.modqueue__ticker {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.modqueue__status {
+  color: var(--faint);
+  font-style: italic;
+}
+.modqueue__actions {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

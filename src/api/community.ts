@@ -21,6 +21,32 @@ export function communityEnabled(): boolean {
   return v === '1' || v === 'true';
 }
 
+/**
+ * Posting policy (0008, D-A). The spec's freemium table implies premium-only
+ * posting; we default to "any verified member can post" so the discussion has
+ * seed content at launch. Flip this one constant to honour the spec's gate.
+ */
+const REQUIRE_PREMIUM_TO_POST = false;
+
+export type PosterGate = { canPost: true } | { canPost: false; reason: 'unverified' | 'premium-required' | 'unknown-user' };
+
+/** Can this user post? Verified account required; premium gate is config (D-A). */
+export async function getPosterGate(userId: string): Promise<PosterGate> {
+  const u = await getPrismaClient().user.findUnique({
+    where: { id: userId },
+    select: { emailVerified: true, tier: true },
+  });
+  if (!u) return { canPost: false, reason: 'unknown-user' };
+  if (!u.emailVerified) return { canPost: false, reason: 'unverified' };
+  if (REQUIRE_PREMIUM_TO_POST && u.tier !== 'premium') return { canPost: false, reason: 'premium-required' };
+  return { canPost: true };
+}
+
+export async function isAdminUser(userId: string): Promise<boolean> {
+  const u = await getPrismaClient().user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  return Boolean(u?.isAdmin);
+}
+
 export type PostStatus = 'visible' | 'hidden' | 'removed';
 
 export interface CommunityPost {

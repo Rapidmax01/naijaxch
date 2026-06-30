@@ -338,19 +338,35 @@ function mkDisclosure(
   };
 }
 
+/** Shift an ISO date by `days` (placeholder date spread so the feed looks real). */
+function shiftDate(base: string, days: number): string {
+  const d = new Date(`${base}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export const SAMPLE_DISCLOSURES: Record<Ticker, Disclosure[]> = {};
 for (const s of SEEDS) {
   const h = hash(s.ticker);
+  // Per-company offset so filings don't all land on the same day (homepage feed).
+  const off = h % 70; // 0–69 days
   const items: Disclosure[] = [
-    mkDisclosure(s.ticker, 'results', 'Audited Full-Year Results FY2023', '2024-03-12'),
-    mkDisclosure(s.ticker, 'dividend', 'Notice of Dividend Declaration', '2024-03-14'),
+    mkDisclosure(s.ticker, 'results', 'Audited Full-Year Results FY2023', shiftDate('2024-03-12', -off)),
+    mkDisclosure(s.ticker, 'dividend', 'Notice of Dividend Declaration', shiftDate('2024-03-14', -off)),
   ];
   if (h % 2 === 0) {
-    items.push(mkDisclosure(s.ticker, 'board', 'Change to the Board of Directors', '2024-01-22'));
+    items.push(
+      mkDisclosure(s.ticker, 'board', 'Change to the Board of Directors', shiftDate('2024-01-22', -off)),
+    );
   }
   if (h % 3 === 0) {
     items.push(
-      mkDisclosure(s.ticker, 'material-event', 'Notification of a Material Development', '2024-06-05'),
+      mkDisclosure(
+        s.ticker,
+        'material-event',
+        'Notification of a Material Development',
+        shiftDate('2024-09-05', -off),
+      ),
     );
   }
   items.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)); // newest first

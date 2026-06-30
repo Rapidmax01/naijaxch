@@ -38,6 +38,8 @@ export interface SourceOfTruth {
   getQuote(ticker: Ticker): Promise<DelayedQuote | null>;
   /** Official NGX disclosures for a ticker, newest first (proposal 0009). */
   getDisclosures(ticker: Ticker): Promise<Disclosure[]>;
+  /** Latest disclosures across all companies, newest first (homepage feed). */
+  getLatestDisclosures(limit: number): Promise<Disclosure[]>;
 }
 
 class InMemorySourceOfTruth implements SourceOfTruth {
@@ -81,6 +83,13 @@ class InMemorySourceOfTruth implements SourceOfTruth {
 
   async getDisclosures(ticker: Ticker): Promise<Disclosure[]> {
     return SAMPLE_DISCLOSURES[ticker] ?? [];
+  }
+
+  async getLatestDisclosures(limit: number): Promise<Disclosure[]> {
+    return Object.values(SAMPLE_DISCLOSURES)
+      .flat()
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .slice(0, limit);
   }
 }
 

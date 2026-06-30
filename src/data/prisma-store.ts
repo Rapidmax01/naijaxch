@@ -41,6 +41,23 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Prisma disclosure row → domain Disclosure. */
+function mapDisclosure(d: {
+  ticker: string;
+  title: string;
+  type: string;
+  publishedAt: Date;
+  sourceUrl: string;
+}): Disclosure {
+  return {
+    ticker: d.ticker,
+    title: d.title,
+    type: d.type as DisclosureType,
+    publishedAt: d.publishedAt.toISOString(),
+    sourceUrl: d.sourceUrl,
+  };
+}
+
 /** Prisma fundamentals row → domain Fundamentals (Decimal → number at the boundary). */
 function mapFundamentals(f: {
   ticker: string;
@@ -144,12 +161,14 @@ export class PrismaSourceOfTruth implements SourceOfTruth {
       orderBy: { publishedAt: 'desc' },
       take: 50,
     });
-    return rows.map((d) => ({
-      ticker: d.ticker,
-      title: d.title,
-      type: d.type as DisclosureType,
-      publishedAt: d.publishedAt.toISOString(),
-      sourceUrl: d.sourceUrl,
-    }));
+    return rows.map(mapDisclosure);
+  }
+
+  async getLatestDisclosures(limit: number): Promise<Disclosure[]> {
+    const rows = await client().disclosure.findMany({
+      orderBy: { publishedAt: 'desc' },
+      take: limit,
+    });
+    return rows.map(mapDisclosure);
   }
 }

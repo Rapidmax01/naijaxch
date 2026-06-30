@@ -33,4 +33,15 @@ describe('SAMPLE_DISCLOSURES fixtures', () => {
       expect(types).toContain('dividend');
     }
   });
+
+  it('flattens across companies into a newest-first feed (homepage)', () => {
+    const all = Object.values(SAMPLE_DISCLOSURES).flat();
+    const feed = [...all].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 10);
+    expect(feed).toHaveLength(10);
+    // Spans more than one company, and is strictly newest-first.
+    expect(new Set(feed.map((d) => d.ticker)).size).toBeGreaterThan(1);
+    for (let i = 1; i < feed.length; i++) {
+      expect(feed[i - 1]!.publishedAt >= feed[i]!.publishedAt).toBe(true);
+    }
+  });
 });

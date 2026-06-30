@@ -17,10 +17,14 @@ export {
   deleteOwnPost,
   getPosterGate,
   isAdminUser,
+  listModerationQueue,
   listPosts,
+  moderate,
   reportPost,
   setPostStatus,
   type CommunityPost,
+  type ModAction,
+  type ModItem,
 } from './community';
 export { getStoredSummary, type StoredSummary } from './ai';
 export { getDelayedQuote } from './quote';

@@ -139,3 +139,55 @@ export async function reportPost(postId: string, reporterId: string, reason: str
 export async function setPostStatus(postId: string, status: PostStatus): Promise<void> {
   await getPrismaClient().communityPost.update({ where: { id: postId }, data: { status } });
 }
+
+export interface ModItem {
+  reportId: string;
+  postId: string;
+  reason: string;
+  reportedAt: string;
+  ticker: string;
+  author: string;
+  body: string;
+  postStatus: PostStatus;
+}
+
+/** Open reports with their post context (admin-gated by the caller). */
+export async function listModerationQueue(): Promise<ModItem[]> {
+  const rows = await getPrismaClient().postReport.findMany({
+    where: { status: 'open' },
+    orderBy: { createdAt: 'asc' },
+    take: 200,
+    include: { post: { include: { user: { select: { name: true } } } } },
+  });
+  return rows.map((r) => ({
+    reportId: r.id,
+    postId: r.postId,
+    reason: r.reason,
+    reportedAt: r.createdAt.toISOString(),
+    ticker: r.post.ticker,
+    author: r.post.user.name ?? 'Member',
+    body: r.post.body,
+    postStatus: r.post.status as PostStatus,
+  }));
+}
+
+export type ModAction = 'hide' | 'remove' | 'dismiss';
+
+/** Resolve a report: hide/remove the post (and close its open reports), or dismiss. */
+export async function moderate(reportId: string, action: ModAction): Promise<boolean> {
+  const db = getPrismaClient();
+  const report = await db.postReport.findUnique({ where: { id: reportId } });
+  if (!report) return false;
+
+  if (action === 'dismiss') {
+    await db.postReport.update({ where: { id: reportId }, data: { status: 'dismissed' } });
+    return true;
+  }
+
+  const status: PostStatus = action === 'hide' ? 'hidden' : 'removed';
+  await db.$transaction([
+    db.communityPost.update({ where: { id: report.postId }, data: { status } }),
+    db.postReport.updateMany({ where: { postId: report.postId, status: 'open' }, data: { status: 'actioned' } }),
+  ]);
+  return true;
+}

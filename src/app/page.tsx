@@ -1,8 +1,10 @@
 import { dataStore } from '@/data';
+import { getNewsFeed } from '@/api';
 import { sectorColor } from '@/web/lib/sectors';
+import { NgxNewsFeed } from '@/web/components/home/NgxNewsFeed';
 
 export default async function HomePage() {
-  const companies = await dataStore.listCompanies();
+  const [companies, news] = await Promise.all([dataStore.listCompanies(), getNewsFeed(10)]);
 
   return (
     <div className="home">
@@ -28,6 +30,8 @@ export default async function HomePage() {
           </a>
         </div>
       </section>
+
+      <NgxNewsFeed items={news} />
 
       <div className="home__section-head">
         <h2 className="home__subtitle">Markets</h2>

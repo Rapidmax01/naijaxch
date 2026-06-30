@@ -28,7 +28,7 @@ export {
 } from './community';
 export { getStoredSummary, type StoredSummary } from './ai';
 export { getDelayedQuote } from './quote';
-export { getDisclosures } from './disclosures';
+export { getDisclosures, getNewsFeed, type NewsFeedItem } from './disclosures';
 export {
   getSectorContext,
   type SectorContext,

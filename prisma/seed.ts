@@ -75,13 +75,12 @@ async function main() {
     }
   }
 
+  // Replace the whole set — the fixtures are authoritative, and a sourceUrl
+  // change would otherwise orphan the old rows rather than update them.
+  await prisma.disclosure.deleteMany({});
   for (const items of Object.values(SAMPLE_DISCLOSURES)) {
     for (const d of items) {
-      await prisma.disclosure.upsert({
-        where: { ticker_sourceUrl: { ticker: d.ticker, sourceUrl: d.sourceUrl } },
-        create: { ...d, publishedAt: new Date(d.publishedAt) },
-        update: { title: d.title, type: d.type, publishedAt: new Date(d.publishedAt) },
-      });
+      await prisma.disclosure.create({ data: { ...d, publishedAt: new Date(d.publishedAt) } });
     }
   }
 

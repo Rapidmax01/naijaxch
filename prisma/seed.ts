@@ -27,8 +27,13 @@ async function main() {
     });
   }
 
+  // Replace the whole price set so re-runs reflect the current fixtures.
+  // (Previously this used createMany(skipDuplicates), which SKIPPED existing
+  // rows — so after the series was extended/rescaled, stale rows survived and
+  // left a discontinuity at the old/new boundary. Delete-then-insert is
+  // authoritative and idempotent.)
+  await prisma.rawPrice.deleteMany({});
   for (const [ticker, points] of Object.entries(SAMPLE_RAW_PRICES)) {
-    // Bulk insert; skip duplicates so re-runs are safe.
     await prisma.rawPrice.createMany({
       data: points.map((p) => ({
         ticker,
@@ -39,10 +44,14 @@ async function main() {
         close: p.close,
         volume: BigInt(p.volume),
       })),
-      skipDuplicates: true,
     });
   }
 
+  // The fixtures are authoritative for the dev DB, so REPLACE the whole set.
+  // (Previously this used create() with no dedup, so every reseed duplicated
+  // corporate actions — which double-applies adjustment factors and corrupts
+  // adjClose, G6. Delete-then-insert is idempotent and clears stale rows.)
+  await prisma.corporateAction.deleteMany({});
   for (const actions of Object.values(SAMPLE_CORPORATE_ACTIONS)) {
     for (const a of actions) {
       await prisma.corporateAction.create({
